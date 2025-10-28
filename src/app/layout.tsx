@@ -29,12 +29,18 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <head>
+        {/* Simple, compatible viewport */}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Preload critical fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
       </head>
-      <body className="h-full">
+      <body className="h-full antialiased">
         <ThemeProvider>
-          <BodyWrapper className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-            {children}
+          <BodyWrapper className={`${geistSans.variable} ${geistMono.variable}`}>
+            {/* Mobile-safe container */}
+            <div className="min-h-screen w-full overflow-x-hidden">
+              {children}
+            </div>
           </BodyWrapper>
         </ThemeProvider>
       </body>
