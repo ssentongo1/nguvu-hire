@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -15,20 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NguvuHire",
-  description: "Job board app",
+  title: "NguvuHire - Find Jobs & Talent Across Africa",
+  description: "Connect job seekers and employers across Africa and beyond",
   manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "NguvuHire",
-  },
-};
-
-// FIXED: Better mobile viewport
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
+  keywords: "jobs, africa, employment, hiring, talent, recruitment",
 };
 
 export default function RootLayout({
@@ -38,10 +28,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="h-full">
+      <head>
+        {/* Simple, compatible viewport */}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Preload critical fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+      </head>
+      <body className="h-full antialiased">
         <ThemeProvider>
-          <BodyWrapper className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-            {children}
+          <BodyWrapper className={`${geistSans.variable} ${geistMono.variable}`}>
+            {/* Mobile-safe container */}
+            <div className="min-h-screen w-full overflow-x-hidden">
+              {children}
+            </div>
           </BodyWrapper>
         </ThemeProvider>
       </body>
