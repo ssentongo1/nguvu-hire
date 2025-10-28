@@ -16,22 +16,25 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
     
-    // Very simple detection - only add class if absolutely necessary
-    const isVeryOldBrowser = !window.CSS || !CSS.supports('color', 'var(--test)');
+    // Detect if it's an older browser (Samsung Note 4)
+    const isOlderBrowser = !CSS.supports('display', 'grid');
     
-    if (isVeryOldBrowser) {
-      // Only add a class, don't change theme logic
+    if (isOlderBrowser) {
+      // Older browser - force light mode but don't override styles
+      setDarkMode(false);
+      document.documentElement.classList.remove('dark');
+      // Add a class to identify older browsers
       document.documentElement.classList.add('older-browser');
-    }
-    
-    if (storedTheme === "light") {
+    } else if (storedTheme === "light") {
+      // Modern browser with light mode preference
       setDarkMode(false);
       document.documentElement.classList.remove('dark');
     } else if (storedTheme === "dark") {
+      // Modern browser with dark mode preference
       setDarkMode(true);
       document.documentElement.classList.add('dark');
     }
-    // Keep default dark mode for modern browsers
+    // No else - keep default dark mode for modern browsers
   }, []);
 
   const toggleDarkMode = () => {

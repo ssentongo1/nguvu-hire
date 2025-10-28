@@ -1,36 +1,17 @@
 @import "tailwindcss";
 
-/* ===== MODERN BROWSER VARIABLES ===== */
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
-/* ===== OLDER BROWSER FALLBACKS (Very specific) ===== */
-/* Only apply to very old browsers that don't support CSS variables */
-@supports not (color: var(--test)) {
-  body.older-browser {
-    background: #ffffff !important;
-    color: #171717 !important;
-  }
-  
-  /* Only force light mode text visibility */
-  body.older-browser .text-invisible {
-    color: #171717 !important;
-  }
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
-/* ===== NORMAL STYLES ===== */
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  margin: 0;
-  padding: 0;
-  line-height: 1.5;
-}
-
-/* Dark mode for modern browsers */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -38,28 +19,21 @@ body {
   }
 }
 
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-}
-
-/* ===== MOBILE OPTIMIZATIONS ===== */
-html, body {
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  /* Prevent horizontal scroll on mobile */
   overflow-x: hidden;
-  width: 100%;
 }
 
-button, a, [role="button"] {
+/* Mobile-responsive text sizing */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Ensure proper tap targets on mobile */
+button, a {
   min-height: 44px;
   min-width: 44px;
-  cursor: pointer;
-}
-
-* {
-  -webkit-overflow-scrolling: touch;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
 }
