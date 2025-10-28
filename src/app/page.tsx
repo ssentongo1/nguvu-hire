@@ -55,7 +55,7 @@ export default function Home() {
         } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+          options: { emailRedirectTo: "http://localhost:3000" }, // adjust for production
         });
 
         if (signUpError) throw signUpError;
@@ -93,7 +93,7 @@ export default function Home() {
     setResetMessage("");
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: "http://localhost:3000/reset-password",
       });
       if (error) throw error;
       setResetMessage("Password reset email sent! Check your inbox.");
@@ -102,38 +102,28 @@ export default function Home() {
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
-      </div>
-    </div>
-  );
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white">Loading...</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-gray-100 px-4 py-8">
-      {/* Mobile-responsive container */}
-      <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md border border-gray-200 mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">NguvuHire</h1>
-          <p className="text-gray-600 text-base sm:text-lg mt-2">Your Gateway to Opportunity</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-gray-100 p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-200">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800">NguvuHire</h1>
+          <p className="text-gray-600 text-lg mt-2">Your Gateway to Opportunity</p>
         </div>
 
-        <h2 className="text-xl font-bold text-gray-800 mb-6 text-center sm:text-2xl">
-          {isLogin ? "Welcome Back" : "Create Account"}
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">{isLogin ? "Welcome Back" : "Create Account"}</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Email</label>
+            <label className="block text-gray-700 font-medium mb-2">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full p-3 sm:p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base"
+              className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               placeholder="Enter your email"
             />
           </div>
@@ -141,11 +131,11 @@ export default function Home() {
           {/* Role */}
           {!isLogin && (
             <div>
-              <label className="block text-gray-700 font-medium mb-2 text-sm sm:text-base">I am a</label>
+              <label className="block text-gray-700 font-medium mb-2">I am a</label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as "job_seeker" | "employer")}
-                className="w-full p-3 sm:p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base"
+                className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               >
                 <option value="job_seeker">Job Seeker</option>
                 <option value="employer">Employer</option>
@@ -156,12 +146,12 @@ export default function Home() {
           {/* Employer Type (only if Employer selected) */}
           {!isLogin && role === "employer" && (
             <div>
-              <label className="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Employer Type</label>
+              <label className="block text-gray-700 font-medium mb-2">Employer Type</label>
               <select
                 value={employerType}
                 onChange={(e) => setEmployerType(e.target.value)}
                 required
-                className="w-full p-3 sm:p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base"
+                className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               >
                 <option value="">-- Select Type --</option>
                 <option value="company">Company</option>
@@ -174,19 +164,19 @@ export default function Home() {
 
           {/* Password */}
           <div className="relative">
-            <label className="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Password</label>
+            <label className="block text-gray-700 font-medium mb-2">Password</label>
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full p-3 sm:p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition pr-12 text-sm sm:text-base"
+              className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition pr-12"
               placeholder="Enter your password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-10 sm:top-12 text-gray-500 hover:text-blue-600 transition text-lg"
+              className="absolute right-4 top-12 text-gray-500 hover:text-blue-600 transition"
             >
               {showPassword ? "🙈" : "👁️"}
             </button>
@@ -195,45 +185,45 @@ export default function Home() {
           {/* Confirm Password */}
           {!isLogin && (
             <div className="relative">
-              <label className="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Confirm Password</label>
+              <label className="block text-gray-700 font-medium mb-2">Confirm Password</label>
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full p-3 sm:p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition pr-12 text-sm sm:text-base"
+                className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition pr-12"
                 placeholder="Confirm your password"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-10 sm:top-12 text-gray-500 hover:text-blue-600 transition text-lg"
+                className="absolute right-4 top-12 text-gray-500 hover:text-blue-600 transition"
               >
                 {showConfirmPassword ? "🙈" : "👁️"}
               </button>
             </div>
           )}
 
-          {error && <p className="text-red-500 text-center font-medium text-sm sm:text-base">{error}</p>}
-          {resetMessage && <p className="text-green-500 text-center font-medium text-sm sm:text-base">{resetMessage}</p>}
+          {error && <p className="text-red-500 text-center font-medium">{error}</p>}
+          {resetMessage && <p className="text-green-500 text-center font-medium">{resetMessage}</p>}
 
           <button 
             type="submit" 
-            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-3 sm:p-4 rounded-lg font-semibold text-base sm:text-lg transition-all duration-200 transform hover:scale-[1.02] shadow-md min-h-[44px]"
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-[1.02] shadow-md"
           >
             {isLogin ? "Log In" : "Create Account"}
           </button>
         </form>
 
         {isLogin && (
-          <p className="mt-4 sm:mt-6 text-center text-gray-600 text-sm sm:text-base">
+          <p className="mt-6 text-center text-gray-600">
             <button onClick={handlePasswordReset} className="text-blue-600 hover:text-blue-700 font-medium transition">
               Forgot Password?
             </button>
           </p>
         )}
 
-        <p className="mt-4 sm:mt-6 text-center text-gray-600 border-t border-gray-200 pt-4 sm:pt-6 text-sm sm:text-base">
+        <p className="mt-6 text-center text-gray-600 border-t border-gray-200 pt-6">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <button 
             onClick={() => setIsLogin(!isLogin)} 

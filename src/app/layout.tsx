@@ -25,10 +25,16 @@ export const metadata: Metadata = {
   },
 };
 
-// FIXED: Better mobile viewport
+// ADD THIS for proper mobile viewport handling
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' }
+  ],
 };
 
 export default function RootLayout({
@@ -38,13 +44,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="h-full">
-        <ThemeProvider>
-          <BodyWrapper className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-            {children}
-          </BodyWrapper>
-        </ThemeProvider>
-      </body>
+      <head>
+        {/* Prevent zoom on input focus on mobile */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+      </head>
+      <ThemeProvider>
+        <BodyWrapper className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          {children}
+        </BodyWrapper>
+      </ThemeProvider>
     </html>
   );
 }
