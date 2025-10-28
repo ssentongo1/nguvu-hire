@@ -4,139 +4,62 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --border: #e5e5e5;
-  --input: #f8f8f8;
-  --ring: #3b82f6;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
 }
 
-/* ===== OLDER BROWSER FALLBACKS ===== */
-/* Force light mode as default for maximum compatibility */
+/* ===== OLDER BROWSER DETECTION ===== */
+/* This will only apply to browsers that don't support CSS grid (older browsers) */
+@supports not (display: grid) {
+  body {
+    background: #ffffff !important;
+    color: #171717 !important;
+  }
+  
+  .older-browser-fallback {
+    background: #ffffff !important;
+    color: #171717 !important;
+  }
+}
+
+/* ===== NORMAL STYLES (for modern browsers) ===== */
+/* These won't override your beautiful colors on modern devices */
 body {
-  background: #ffffff !important;
-  color: #171717 !important;
+  background: var(--background);
+  color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   margin: 0;
   padding: 0;
   line-height: 1.5;
-  -webkit-text-size-adjust: 100%; /* Prevent font scaling on iOS */
 }
 
-/* Light mode fallback class for older browsers */
-.light-mode-fallback {
-  background: #ffffff !important;
-  color: #171717 !important;
-}
-
-.light-mode-fallback * {
-  background-color: inherit !important;
-  color: inherit !important;
-}
-
-/* Ensure text visibility in all modes */
-.text-visible {
-  color: #171717 !important;
-}
-
-/* Card backgrounds */
-.bg-card {
-  background: #ffffff !important;
-}
-
-.bg-card-light {
-  background: #f8f8f8 !important;
-}
-
-/* Input styles */
-.bg-input {
-  background: #f8f8f8 !important;
-  border: 1px solid #e5e5e5 !important;
-  color: #171717 !important;
-}
-
-/* Border colors */
-.border-light {
-  border-color: #e5e5e5 !important;
-}
-
-.border-medium {
-  border-color: #d4d4d4 !important;
-}
-
-/* Text colors for light mode */
-.text-dark {
-  color: #171717 !important;
-}
-
-.text-gray-dark {
-  color: #404040 !important;
-}
-
-.text-gray-medium {
-  color: #737373 !important;
-}
-
-/* Button styles for light mode */
-.btn-primary {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  border: none !important;
-}
-
-.btn-secondary {
-  background: #f8f8f8 !important;
-  color: #171717 !important;
-  border: 1px solid #e5e5e5 !important;
-}
-
-/* ===== MODERN BROWSER DARK MODE ===== */
-/* Only apply if browser supports CSS variables properly */
+/* Dark mode for modern browsers */
 @media (prefers-color-scheme: dark) {
-  .modern-browser {
+  :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
 
-/* Dark mode styles - only for modern browsers */
 .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
-  --card: #171717;
-  --card-foreground: #ededed;
-  --border: #404040;
-  --input: #262626;
-  --ring: #3b82f6;
-}
-
-.dark body {
-  background: #0a0a0a !important;
-  color: #ededed !important;
 }
 
 /* ===== MOBILE OPTIMIZATIONS ===== */
-/* Prevent horizontal scroll */
 html, body {
   overflow-x: hidden;
   width: 100%;
 }
 
-/* Ensure proper tap targets */
 button, a, [role="button"] {
   min-height: 44px;
   min-width: 44px;
   cursor: pointer;
 }
 
-/* Improve touch scrolling */
 * {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Responsive images */
 img {
   max-width: 100%;
   height: auto;

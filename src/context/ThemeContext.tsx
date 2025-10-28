@@ -12,34 +12,29 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [darkMode, setDarkMode] = useState(true);
 
-  // Load theme from localStorage on mount with browser detection
+  // Load theme from localStorage on mount
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
     
-    // Check if browser supports modern CSS (older browsers will default to light mode)
-    const isModernBrowser = typeof CSS !== 'undefined' && CSS.supports('color', 'var(--test)');
+    // Detect if it's an older browser (Samsung Note 4)
+    const isOlderBrowser = !CSS.supports('display', 'grid');
     
-    if (!isModernBrowser) {
-      // Older browser - force light mode for better compatibility
+    if (isOlderBrowser) {
+      // Older browser - force light mode but don't override styles
       setDarkMode(false);
       document.documentElement.classList.remove('dark');
-      localStorage.setItem("theme", "light");
+      // Add a class to identify older browsers
+      document.documentElement.classList.add('older-browser');
     } else if (storedTheme === "light") {
+      // Modern browser with light mode preference
       setDarkMode(false);
       document.documentElement.classList.remove('dark');
     } else if (storedTheme === "dark") {
+      // Modern browser with dark mode preference
       setDarkMode(true);
       document.documentElement.classList.add('dark');
-    } else {
-      // Default to system preference for modern browsers
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setDarkMode(prefersDark);
-      if (prefersDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
     }
+    // No else - keep default dark mode for modern browsers
   }, []);
 
   const toggleDarkMode = () => {
@@ -59,10 +54,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
-      {/* Fallback container for older browsers */}
-      <div className={darkMode ? '' : 'light-mode-fallback'}>
-        {children}
-      </div>
+      {children}
     </ThemeContext.Provider>
   );
 };
