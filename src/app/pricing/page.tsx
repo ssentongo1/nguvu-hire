@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import PricingCard from '@/components/PricingCard'
 
@@ -17,7 +17,8 @@ interface SubscriptionPlan {
   created_at: string
 }
 
-export default function PricingPage() {
+// Create a separate component that uses useSearchParams
+function PricingContent() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const [loading, setLoading] = useState(true)
   const searchParams = useSearchParams()
@@ -241,5 +242,21 @@ export default function PricingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Main component with Suspense boundary
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading pricing...</p>
+        </div>
+      </div>
+    }>
+      <PricingContent />
+    </Suspense>
   )
 }

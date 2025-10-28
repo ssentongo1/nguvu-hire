@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
 import { countries } from "@/utils/countries";
 import BoostPromotionBanner from "@/components/BoostPromotionBanner";
 
-export default function PostJobPage() {
+// Create a separate component that uses useSearchParams
+function PostJobContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { darkMode } = useTheme();
@@ -428,5 +429,21 @@ export default function PostJobPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function PostJobPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <PostJobContent />
+    </Suspense>
   );
 }
