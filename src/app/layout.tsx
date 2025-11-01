@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
-import BodyWrapper from "./BodyWrapper.client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,6 +18,9 @@ export const metadata: Metadata = {
   description: "Connect job seekers and employers across Africa and beyond",
   manifest: "/manifest.json",
   keywords: "jobs, africa, employment, hiring, talent, recruitment",
+  icons: {
+    icon: '/favicon-neww.png',
+  },
 };
 
 export default function RootLayout({
@@ -29,19 +31,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <head>
-        {/* Simple, compatible viewport */}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Preload critical fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
       </head>
-      <body className="h-full antialiased">
+      <body className={`h-full antialiased ${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProvider>
-          <BodyWrapper className={`${geistSans.variable} ${geistMono.variable}`}>
-            {/* Mobile-safe container */}
-            <div className="min-h-screen w-full overflow-x-hidden">
-              {children}
-            </div>
-          </BodyWrapper>
+          {/* Mobile-safe container */}
+          <div className="min-h-screen w-full overflow-x-hidden">
+            {children}
+          </div>
         </ThemeProvider>
       </body>
     </html>
