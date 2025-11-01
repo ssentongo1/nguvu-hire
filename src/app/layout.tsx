@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   keywords: "jobs, africa, employment, hiring, talent, recruitment",
   icons: {
-    icon: '/favicon-neww.png',
+    icon: '/favicon-neww2.png',
   },
 };
 
