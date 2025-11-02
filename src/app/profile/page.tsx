@@ -82,14 +82,14 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div
-        className={`min-h-screen p-6 ${
+        className={`min-h-screen p-4 sm:p-6 ${
           darkMode
             ? "bg-gradient-to-br from-blue-900 via-purple-900 to-black text-white"
             : "bg-gray-50 text-gray-900"
         }`}
       >
         <div
-          className={`max-w-xl mx-auto rounded-xl p-6 shadow-xl backdrop-blur-lg ${
+          className={`max-w-2xl mx-auto rounded-xl p-4 sm:p-6 shadow-xl backdrop-blur-lg ${
             darkMode ? "bg-white/5" : "bg-white"
           }`}
         >
@@ -101,14 +101,14 @@ export default function ProfilePage() {
 
   return (
     <div
-      className={`min-h-screen p-6 ${
+      className={`min-h-screen p-4 sm:p-6 ${
         darkMode
           ? "bg-gradient-to-br from-blue-900 via-purple-900 to-black text-white"
           : "bg-gray-50 text-gray-900"
       }`}
     >
       <div
-        className={`max-w-2xl mx-auto rounded-xl p-6 shadow-xl backdrop-blur-lg ${
+        className={`max-w-2xl mx-auto rounded-xl p-4 sm:p-6 shadow-xl backdrop-blur-lg ${
           darkMode ? "bg-white/5" : "bg-white"
         }`}
       >

@@ -1,4 +1,3 @@
-// src/app/profile/view/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -6,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import ProfileSkeleton from "@/components/ProfileSkeleton";
 
-const BUCKET = "profile-pictures"; // <-- keep in sync with the rest of your app
+const BUCKET = "profile-pictures";
 
 type Profile = {
   id: string;
@@ -34,7 +33,6 @@ export default function ProfileViewPage() {
           return;
         }
 
-        // IMPORTANT: select id so our Profile type is satisfied
         const { data, error } = await supabase
           .from("profiles")
           .select("id, bio, skills, profile_picture")
@@ -73,11 +71,10 @@ export default function ProfileViewPage() {
     };
   }, [router]);
 
-  // === SHOW THE SAME PROFILE SKELETON WHILE LOADING ===
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-black p-6 text-white">
-        <div className="max-w-md w-full bg-white/5 p-6 rounded-2xl shadow-lg">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-black p-4 sm:p-6 text-white">
+        <div className="max-w-md w-full bg-white/5 p-4 sm:p-6 rounded-2xl shadow-lg">
           <ProfileSkeleton />
         </div>
       </div>
@@ -86,39 +83,65 @@ export default function ProfileViewPage() {
 
   if (!profile)
     return (
-      <div className="p-6">
-        No profile found.{" "}
-        <button onClick={() => router.push("/profile")} className="ml-2 underline">
-          Create one
-        </button>
+      <div className="p-4 sm:p-6 text-white text-center">
+        <div className="max-w-md mx-auto bg-white/5 p-6 rounded-2xl">
+          <p>No profile found.</p>
+          <button 
+            onClick={() => router.push("/profile")} 
+            className="mt-4 px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors w-full sm:w-auto"
+          >
+            Create Profile
+          </button>
+        </div>
       </div>
     );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-black p-6 text-white">
-      <div className="max-w-md w-full bg-white/5 p-6 rounded-2xl shadow-lg">
-        <div className="flex flex-col items-center">
-          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-400">
-            <img src={imageUrl || "/default-icon.png"} alt="Profile" className="object-cover w-full h-full" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-black p-4 sm:p-6 text-white">
+      <div className="max-w-md w-full bg-white/5 p-4 sm:p-6 rounded-2xl shadow-lg">
+        {/* Profile Header */}
+        <div className="flex flex-col items-center text-center">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-purple-400">
+            <img 
+              src={imageUrl || "/default-icon.png"} 
+              alt="Profile" 
+              className="object-cover w-full h-full"
+            />
           </div>
 
-          <h2 className="text-2xl font-bold mt-4">My Profile</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mt-4">My Profile</h2>
         </div>
 
-        <div className="mt-6">
-          <h3 className="text-sm text-purple-300 font-semibold">Bio</h3>
-          <p className="mt-2 text-white/90">{profile.bio || "No bio provided."}</p>
+        {/* Profile Details */}
+        <div className="mt-6 space-y-4">
+          <div>
+            <h3 className="text-sm text-purple-300 font-semibold">Bio</h3>
+            <p className="mt-2 text-white/90 text-sm sm:text-base">
+              {profile.bio || "No bio provided."}
+            </p>
+          </div>
 
-          <h3 className="text-sm text-purple-300 font-semibold mt-4">Skills</h3>
-          <p className="mt-2 text-white/90">{profile.skills || "No skills added."}</p>
+          <div>
+            <h3 className="text-sm text-purple-300 font-semibold">Skills</h3>
+            <p className="mt-2 text-white/90 text-sm sm:text-base">
+              {profile.skills || "No skills added."}
+            </p>
+          </div>
         </div>
 
-        <div className="mt-6 flex justify-between">
-          <button className="px-4 py-2 rounded-lg bg-white/5" onClick={() => router.push("/profile")}>
-            Edit
+        {/* Action Buttons */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <button 
+            className="px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm sm:text-base flex-1"
+            onClick={() => router.push("/profile")}
+          >
+            Edit Profile
           </button>
-          <button className="px-4 py-2 rounded-lg bg-purple-600" onClick={() => router.push("/dashboard")}>
-            Back to dashboard
+          <button 
+            className="px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-sm sm:text-base flex-1"
+            onClick={() => router.push("/dashboard")}
+          >
+            Back to Dashboard
           </button>
         </div>
       </div>
