@@ -3,13 +3,14 @@ import { supabaseServer } from "@/utils/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, role, employerType } = await request.json();
+    const { userId, role, employerType, country } = await request.json();
 
     // Debug logs for visibility
     console.log("➡️ Incoming create-profile request:", {
       userId,
       role,
       employerType,
+      country,
     });
 
     // Step 1: Check if profile already exists
@@ -27,6 +28,11 @@ export async function POST(request: NextRequest) {
     const profileData: any = {
       role: role || "job_seeker",
     };
+
+    // Add country if provided
+    if (country) {
+      profileData.country = country;
+    }
 
     if (role === "employer") {
       profileData.employer_type = employerType || null;

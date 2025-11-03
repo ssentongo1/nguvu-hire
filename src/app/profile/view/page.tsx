@@ -82,8 +82,8 @@ export default function ProfileViewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 p-4 flex items-center justify-center">
-        <div className="w-full max-w-sm">
+      <div className="min-h-screen bg-white p-3 flex items-center justify-center">
+        <div className="w-full max-w-lg">
           <ProfileSkeleton />
         </div>
       </div>
@@ -92,16 +92,16 @@ export default function ProfileViewPage() {
 
   if (!profile)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 p-4 flex items-center justify-center">
-        <div className="w-full max-w-sm bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 text-center">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
-            <span className="text-2xl text-white">👤</span>
+      <div className="min-h-screen bg-white p-3 flex items-center justify-center">
+        <div className="w-full max-w-lg bg-gray-50 rounded-lg p-6 text-center border">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
+            <span className="text-2xl">👤</span>
           </div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">No Profile Found</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">No Profile Found</h3>
           <p className="text-gray-600 mb-6">Create your profile to get started</p>
           <button 
             onClick={() => router.push("/profile")} 
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-bold hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg active:scale-95"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
           >
             Create Profile
           </button>
@@ -112,138 +112,110 @@ export default function ProfileViewPage() {
   const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous User';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 p-4 flex items-center justify-center">
-      {/* Mobile-Optimized Profile Card */}
-      <div className="w-full max-w-sm bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden">
+    <div className="min-h-screen bg-white p-3">
+      {/* Zoomed-out Container - More desktop-like on mobile */}
+      <div className="max-w-4xl mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden">
         
-        {/* Header with Profile Image */}
-        <div className="relative pt-8 px-6 text-center">
-          <div className="relative">
-            <div className="w-28 h-28 mx-auto rounded-2xl overflow-hidden border-4 border-white shadow-2xl">
+        {/* Compact Header Row */}
+        <div className="flex items-start p-4 border-b border-gray-200">
+          <div className="flex-shrink-0 mr-4">
+            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-300">
               <img 
                 src={imageUrl || "/default-icon.png"} 
                 alt="Profile" 
                 className="object-cover w-full h-full"
               />
             </div>
-            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
           </div>
           
-          <h1 className="text-2xl font-bold text-gray-800 mt-6 mb-1">{fullName}</h1>
-          <p className="text-gray-500 text-sm capitalize mb-2">
-            {profile.role?.replace('_', ' ') || 'User'}
-          </p>
-          
-          {/* Quick Stats */}
-          <div className="flex justify-center space-x-6 mt-4 mb-2">
-            <div className="text-center">
-              <div className="text-gray-800 font-bold">12</div>
-              <div className="text-gray-500 text-xs">Posts</div>
-            </div>
-            <div className="text-center">
-              <div className="text-gray-800 font-bold">48</div>
-              <div className="text-gray-500 text-xs">Following</div>
-            </div>
-            <div className="text-center">
-              <div className="text-gray-800 font-bold">127</div>
-              <div className="text-gray-500 text-xs">Followers</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Info Bar */}
-        <div className="mx-6 mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl border border-purple-100">
-          <div className="space-y-3">
-            {userEmail && (
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <span className="text-purple-600">✉️</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-500 text-xs">Email</p>
-                  <p className="text-gray-800 text-sm font-medium truncate">{userEmail}</p>
-                </div>
-              </div>
-            )}
-            
-            {profile.phone_number && (
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <span className="text-blue-600">📱</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-500 text-xs">Phone</p>
-                  <p className="text-gray-800 text-sm font-medium">{profile.phone_number}</p>
-                </div>
-              </div>
-            )}
-            
-            {profile.country && (
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                  <span className="text-green-600">🌍</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-500 text-xs">Location</p>
-                  <p className="text-gray-800 text-sm font-medium">{profile.country}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bio Section */}
-        <div className="px-6 mt-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
-            <span className="w-2 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full mr-3"></span>
-            About Me
-          </h3>
-          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
-            <p className="text-gray-700 text-sm leading-relaxed">
-              {profile.bio || "No bio provided yet. Add a bio to tell others about yourself."}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-gray-800 truncate">{fullName}</h1>
+            <p className="text-gray-600 text-sm capitalize mb-1">
+              {profile.role?.replace('_', ' ') || 'User'}
             </p>
+            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+              {profile.country && <span>📍 {profile.country}</span>}
+              {profile.phone_number && <span>📞 {profile.phone_number}</span>}
+            </div>
           </div>
-        </div>
-
-        {/* Skills Section */}
-        <div className="px-6 mt-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
-            <span className="w-2 h-6 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full mr-3"></span>
-            Skills & Expertise
-          </h3>
-          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
-            {profile.skills ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.split(',').map((skill, index) => (
-                  <span 
-                    key={index}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl text-sm font-medium shadow-sm"
-                  >
-                    {skill.trim()}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm text-center py-2">No skills added yet</p>
-            )}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="p-6 mt-4">
-          <div className="flex space-x-3">
+          
+          <div className="flex-shrink-0 ml-4">
             <button 
-              className="flex-1 py-4 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 active:scale-95 transition-all shadow-sm"
               onClick={() => router.push("/profile")}
+              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
             >
               Edit
             </button>
+          </div>
+        </div>
+
+        {/* Main Content Grid - Side by side layout */}
+        <div className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Left Column - Bio */}
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">About</h3>
+              <p className="text-gray-700 text-sm leading-relaxed">
+                {profile.bio || "No bio provided yet."}
+              </p>
+            </div>
+
+            {/* Right Column - Skills & Contact */}
+            <div className="space-y-4">
+              {/* Skills */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">Skills</h3>
+                {profile.skills ? (
+                  <div className="flex flex-wrap gap-1">
+                    {profile.skills.split(',').map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium"
+                      >
+                        {skill.trim()}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No skills added</p>
+                )}
+              </div>
+
+              {/* Contact Info */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">Contact</h3>
+                <div className="space-y-2 text-sm">
+                  {userEmail && (
+                    <div className="flex items-center">
+                      <span className="text-gray-500 w-20">Email:</span>
+                      <span className="text-gray-700 font-medium truncate">{userEmail}</span>
+                    </div>
+                  )}
+                  {profile.phone_number && (
+                    <div className="flex items-center">
+                      <span className="text-gray-500 w-20">Phone:</span>
+                      <span className="text-gray-700 font-medium">{profile.phone_number}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Action Bar */}
+        <div className="p-4 bg-gray-50 border-t border-gray-200">
+          <div className="flex justify-between items-center">
             <button 
-              className="flex-1 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-blue-700 active:scale-95 transition-all shadow-lg"
               onClick={() => router.push("/dashboard")}
+              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
             >
-              Dashboard
+              Back to Dashboard
             </button>
+            <div className="text-xs text-gray-500">
+              Last updated: Today
+            </div>
           </div>
         </div>
       </div>

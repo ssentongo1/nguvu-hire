@@ -241,6 +241,7 @@ export default function DashboardPage() {
     profile_picture_url?: string | null;
     role?: string;
     employer_type?: string;
+    country?: string; // Added country field
   } | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
@@ -269,6 +270,27 @@ export default function DashboardPage() {
   // Determine user type based on their profile or role
   const userType = profile?.role === "employer" ? 'employer' : 'job_seeker';
 
+  // Get user's country code from profile country name
+  const getUserCountryCode = () => {
+    if (!profile?.country) return "";
+    const country = countries.find(c => 
+      c.name.toLowerCase() === profile.country?.toLowerCase() || 
+      c.code.toLowerCase() === profile.country?.toLowerCase()
+    );
+    return country?.code || "";
+  };
+
+  // Auto-detect user's country and set filters
+  useEffect(() => {
+    if (profile?.country && !fromCountry && !toCountry) {
+      const userCountryCode = getUserCountryCode();
+      if (userCountryCode) {
+        setFromCountry(userCountryCode);
+        setToCountry(userCountryCode);
+      }
+    }
+  }, [profile, fromCountry, toCountry]);
+
   // Debug logging
   useEffect(() => {
     console.log("Current state:", {
@@ -277,9 +299,12 @@ export default function DashboardPage() {
       availabilitiesCount: availabilities.length,
       userType,
       loadingPosts,
-      initialLoading
+      initialLoading,
+      userCountry: profile?.country,
+      fromCountry,
+      toCountry
     });
-  }, [profile, jobs, availabilities, userType, loadingPosts, initialLoading]);
+  }, [profile, jobs, availabilities, userType, loadingPosts, initialLoading, fromCountry, toCountry]);
 
   // Fetch profile and posts on load
   useEffect(() => {
@@ -295,7 +320,7 @@ export default function DashboardPage() {
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, company_name, profile_picture, profile_picture_url, role, employer_type")
+          .select("id, first_name, last_name, company_name, profile_picture, profile_picture_url, role, employer_type, country") // Added country
           .eq("id", user.id)
           .single();
 
@@ -658,26 +683,27 @@ export default function DashboardPage() {
     }
   };
 
+  // UPDATED: Improved Location-Based Search Function
   const handleRegionSearch = async () => {
     setLoadingRegionResults(true);
     try {
       if (profile?.role === "employer") {
-        // EMPLOYER: Find candidates FROM specific countries who want to work TO specific locations
+        // EMPLOYER VIEW: Find candidates based on location filters
         let query = supabase.from("availabilities").select("*");
 
         if (fromCountry) {
-          // Candidates FROM this country
+          // Find candidates FROM specific country
           const countryObj = countries.find(c => c.code === fromCountry);
           if (countryObj) {
-            query = query.or(`country.ilike.%${countryObj.name}%,country.ilike.%${fromCountry}%`);
+            query = query.ilike("country", `%${countryObj.name}%`);
           }
         }
-        
+
         if (toCountry) {
-          // Candidates willing to work IN this country/location
+          // Find candidates willing to work IN specific country
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
-            query = query.or(`location.ilike.%${countryObj.name}%,location.ilike.%${toCountry}%`);
+            query = query.ilike("location", `%${countryObj.name}%`);
           }
         }
 
@@ -686,20 +712,24 @@ export default function DashboardPage() {
 
         setAvailabilities(data ?? []);
       } else {
-        // JOB SEEKER: Find jobs TO specific countries that prefer candidates FROM my country
+        // JOB SEEKER VIEW: Enhanced location-based job search
         let query = supabase.from("jobs").select("*");
 
+        // SCENARIO 1: Jobs located IN specific country (local jobs)
         if (toCountry) {
-          // Jobs IN this country
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
-            query = query.or(`country.ilike.%${countryObj.name}%,country.ilike.%${toCountry}%`);
+            query = query.ilike("country", `%${countryObj.name}%`);
           }
         }
         
+        // SCENARIO 2: Jobs that are hiring FROM specific country (remote jobs targeting that country)
         if (fromCountry) {
-          // Jobs that prefer candidates FROM my country
-          query = query.contains("preferred_candidate_countries", [fromCountry]);
+          const countryObj = countries.find(c => c.code === fromCountry);
+          if (countryObj) {
+            // Search in preferred_candidate_countries array
+            query = query.contains("preferred_candidate_countries", [countryObj.name]);
+          }
         }
 
         const { data, error } = await query.order("created_at", { ascending: false });
@@ -712,6 +742,35 @@ export default function DashboardPage() {
       alert("Error searching: " + (err as Error).message);
     } finally {
       setLoadingRegionResults(false);
+    }
+  };
+
+  // NEW FUNCTION: Clear all filters and show all posts
+  const handleClearFilters = async () => {
+    setSearchQuery("");
+    setFromCountry("");
+    setToCountry("");
+    setLoadingPosts(true);
+    
+    try {
+      await fetchPosts(profile?.role);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  // NEW FUNCTION: Show local jobs/candidates (user's country)
+  const handleShowLocal = async () => {
+    const userCountryCode = getUserCountryCode();
+    if (userCountryCode) {
+      setFromCountry(userCountryCode);
+      setToCountry(userCountryCode);
+      // Trigger search after a short delay to ensure state is updated
+      setTimeout(() => {
+        handleRegionSearch();
+      }, 100);
+    } else {
+      alert("Please set your country in your profile to use this feature");
     }
   };
 
@@ -838,6 +897,14 @@ export default function DashboardPage() {
               : "When employers post jobs, they will appear here."
             }
           </p>
+          {(fromCountry || toCountry) && (
+            <button
+              onClick={handleClearFilters}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
       );
     }
@@ -921,8 +988,39 @@ export default function DashboardPage() {
             {isEmployer ? "👔 Employer Dashboard - Find Talent" : "💼 Job Seeker Dashboard - Find Jobs"}
           </p>
           
+          {/* Location indicator */}
+          {profile?.country && (
+            <p className={`text-xs mt-1 ${textMuted}`}>
+              📍 Your location: {profile.country}
+            </p>
+          )}
+          
           {/* SEARCH BARS ROW - MOBILE OPTIMIZED */}
           <div className="mt-4 space-y-3">
+            {/* QUICK ACTION BUTTONS */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleShowLocal}
+                className={`px-3 py-2 rounded-md text-xs font-medium transition ${
+                  darkMode 
+                    ? "bg-green-500 text-white hover:bg-green-600 border border-green-400"
+                    : "bg-green-500 text-white hover:bg-green-600 border border-green-400"
+                }`}
+              >
+                Show Local
+              </button>
+              <button
+                onClick={handleClearFilters}
+                className={`px-3 py-2 rounded-md text-xs font-medium transition ${
+                  darkMode 
+                    ? "bg-gray-500 text-white hover:bg-gray-600 border border-gray-400"
+                    : "bg-gray-300 text-gray-700 hover:bg-gray-400 border border-gray-300"
+                }`}
+              >
+                Clear Filters
+              </button>
+            </div>
+
             {/* MAIN SEARCH BAR - Full width on mobile */}
             <div className={`rounded-lg p-2 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
               <div className="flex gap-2">
@@ -964,7 +1062,9 @@ export default function DashboardPage() {
                         : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
                     }`}
                   >
-                    <option value="">From country</option>
+                    <option value="">
+                      {isEmployer ? "Candidates from" : "Jobs hiring from"}
+                    </option>
                     {countries.map(country => (
                       <option key={`from-${country.code}`} value={country.code}>
                         {country.flag} {country.name}
@@ -981,7 +1081,9 @@ export default function DashboardPage() {
                         : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
                     }`}
                   >
-                    <option value="">To country</option>
+                    <option value="">
+                      {isEmployer ? "Candidates willing to work in" : "Jobs located in"}
+                    </option>
                     {countries.map(country => (
                       <option key={`to-${country.code}`} value={country.code}>
                         {country.flag} {country.name}
@@ -1000,6 +1102,13 @@ export default function DashboardPage() {
                   Filter Region
                 </button>
               </div>
+              {/* Help text */}
+              <p className={`text-xs mt-2 ${textMuted}`}>
+                {isEmployer 
+                  ? "Find candidates from specific countries or willing to work in specific locations"
+                  : "Find remote jobs hiring from your country or local jobs in specific countries"
+                }
+              </p>
             </div>
           </div>
         </div>
@@ -1175,4 +1284,5 @@ export default function DashboardPage() {
         />
       )}
     </div>
-  )}
+  );
+}

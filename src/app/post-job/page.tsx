@@ -13,7 +13,7 @@ function PostJobContent() {
   const searchParams = useSearchParams();
   const { darkMode } = useTheme();
 
-  const [profile, setProfile] = useState<{ role?: string } | null>(null);
+  const [profile, setProfile] = useState<{ role?: string; country?: string } | null>(null);
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
   const [country, setCountry] = useState("");
@@ -21,7 +21,8 @@ function PostJobContent() {
   const [responsibilities, setResponsibilities] = useState("");
   const [requirements, setRequirements] = useState("");
   const [description, setDescription] = useState("");
-  const [preferredLocation, setPreferredLocation] = useState("");
+  const [jobType, setJobType] = useState("");
+  const [salary, setSalary] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [deadline, setDeadline] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -29,6 +30,7 @@ function PostJobContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [preferredCandidateCountries, setPreferredCandidateCountries] = useState<string[]>([]);
+  const [workLocationType, setWorkLocationType] = useState<"remote" | "onsite" | "hybrid">("onsite");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,13 +40,18 @@ function PostJobContent() {
 
       const { data } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, country")
         .eq("id", user.id)
         .single();
       setProfile(data ?? null);
+      
+      // Auto-set country from profile if available
+      if (data?.country && !isEditing) {
+        setCountry(data.country);
+      }
     };
     fetchProfile();
-  }, []);
+  }, [isEditing]);
 
   useEffect(() => {
     const editId = searchParams.get('edit');
@@ -72,10 +79,20 @@ function PostJobContent() {
         setResponsibilities(job.responsibilities || "");
         setRequirements(job.requirements || "");
         setDescription(job.description || "");
-        setPreferredLocation(job.preferred_location || "");
+        setJobType(job.job_type || "");
+        setSalary(job.salary || "");
         setCoverUrl(job.cover_photo || "");
         setDeadline(job.deadline || "");
         setPreferredCandidateCountries(job.preferred_candidate_countries || []);
+        
+        // Determine work location type based on location data
+        if (job.location?.toLowerCase().includes('remote')) {
+          setWorkLocationType("remote");
+        } else if (job.location?.toLowerCase().includes('hybrid')) {
+          setWorkLocationType("hybrid");
+        } else {
+          setWorkLocationType("onsite");
+        }
       }
     } catch (error) {
       console.error("Error fetching job data:", error);
@@ -111,6 +128,18 @@ function PostJobContent() {
     );
   };
 
+  const handleWorkLocationChange = (type: "remote" | "onsite" | "hybrid") => {
+    setWorkLocationType(type);
+    // Auto-update location field based on selection
+    if (type === "remote") {
+      setLocation("Remote");
+    } else if (type === "hybrid") {
+      setLocation(prev => prev === "Remote" ? "" : prev);
+    } else {
+      setLocation(prev => prev === "Remote" ? "" : prev);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -136,7 +165,8 @@ function PostJobContent() {
             responsibilities: responsibilities,
             requirements: requirements,
             description: description,
-            preferred_location: preferredLocation,
+            job_type: jobType,
+            salary: salary,
             preferred_candidate_countries: preferredCandidateCountries,
             cover_photo: coverUrl || null,
             deadline: deadline || null,
@@ -158,7 +188,8 @@ function PostJobContent() {
             responsibilities,
             requirements,
             description,
-            preferred_location: preferredLocation,
+            job_type: jobType,
+            salary,
             preferred_candidate_countries: preferredCandidateCountries,
             cover_photo: coverUrl || null,
             deadline: deadline || null,
@@ -247,7 +278,7 @@ function PostJobContent() {
                 >
                   <option value="">Select a country</option>
                   {countries.map(country => (
-                    <option key={country.code} value={country.code}>
+                    <option key={country.code} value={country.name}>
                       {country.flag} {country.name}
                     </option>
                   ))}
@@ -255,14 +286,29 @@ function PostJobContent() {
               </div>
 
               <div>
-                <label className={labelClasses}>Location / City *</label>
+                <label className={labelClasses}>Job Type</label>
+                <select
+                  value={jobType}
+                  onChange={(e) => setJobType(e.target.value)}
+                  className={inputClasses}
+                >
+                  <option value="">Select job type</option>
+                  <option value="full-time">Full-time</option>
+                  <option value="part-time">Part-time</option>
+                  <option value="contract">Contract</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="internship">Internship</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClasses}>Salary Range</label>
                 <input
                   type="text"
-                  placeholder="Office location or city"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g., $50,000 - $70,000"
+                  value={salary}
+                  onChange={(e) => setSalary(e.target.value)}
                   className={inputClasses}
-                  required
                 />
               </div>
 
@@ -275,18 +321,94 @@ function PostJobContent() {
                   className={inputClasses}
                   min={new Date().toISOString().split('T')[0]}
                 />
-                <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                  Set a deadline for applications
-                </p>
               </div>
+            </div>
+
+            {/* Work Location Type */}
+            <div>
+              <label className={labelClasses}>Work Location Type *</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleWorkLocationChange("onsite")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    workLocationType === "onsite"
+                      ? "border-green-500 bg-green-500/10 text-green-600"
+                      : darkMode
+                      ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🏢</div>
+                  <div className="font-semibold">On-site</div>
+                  <div className="text-xs mt-1">Work from office</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleWorkLocationChange("remote")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    workLocationType === "remote"
+                      ? "border-green-500 bg-green-500/10 text-green-600"
+                      : darkMode
+                      ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🏠</div>
+                  <div className="font-semibold">Remote</div>
+                  <div className="text-xs mt-1">Work from anywhere</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleWorkLocationChange("hybrid")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    workLocationType === "hybrid"
+                      ? "border-green-500 bg-green-500/10 text-green-600"
+                      : darkMode
+                      ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🔀</div>
+                  <div className="font-semibold">Hybrid</div>
+                  <div className="text-xs mt-1">Mix of both</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Specific Location */}
+            <div>
+              <label className={labelClasses}>
+                {workLocationType === "remote" ? "Remote Work Details" : "Specific Location *"}
+              </label>
+              <input
+                type="text"
+                placeholder={
+                  workLocationType === "remote" 
+                    ? "e.g., Fully remote, Remote with occasional meetings..."
+                    : "e.g., New York, NY or London, UK"
+                }
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className={inputClasses}
+                required={workLocationType !== "remote"}
+              />
+              <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                {workLocationType === "remote" 
+                  ? "Provide details about remote work arrangements"
+                  : "Enter the specific city, state, or office location"
+                }
+              </p>
             </div>
 
             {/* Preferred Candidate Countries */}
             <div>
               <label className={labelClasses}>
-                Preferred Candidate Countries *
+                Where are you hiring from? *
                 <span className="text-sm font-normal ml-2 text-gray-500">
-                  (Select countries where you prefer candidates to come from)
+                  (Select countries where you want to find candidates)
                 </span>
               </label>
               <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-xl border max-h-60 overflow-y-auto ${
@@ -308,12 +430,15 @@ function PostJobContent() {
               </div>
               {preferredCandidateCountries.length > 0 && (
                 <p className={`text-sm mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>
-                  Selected: {preferredCandidateCountries.map(code => {
+                  Hiring from: {preferredCandidateCountries.map(code => {
                     const country = countries.find(c => c.code === code);
                     return country ? `${country.flag} ${country.name}` : '';
                   }).join(', ')}
                 </p>
               )}
+              <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Job seekers from these countries will see your job in their "Jobs hiring from" filter
+              </p>
             </div>
 
             {/* Job Description */}
@@ -367,42 +492,26 @@ function PostJobContent() {
               </p>
             </div>
 
-            {/* Additional Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <label className={labelClasses}>Preferred Candidate Location</label>
-                <input
-                  type="text"
-                  placeholder="Where would you prefer the candidate to be based?"
-                  value={preferredLocation}
-                  onChange={(e) => setPreferredLocation(e.target.value)}
-                  className={inputClasses}
-                />
-              </div>
-
-              {/* Cover Photo Upload */}
-              <div className="md:col-span-2">
-                <div className={sectionClasses}>
-                  <label className={`block text-sm font-semibold mb-3 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>🖼️ Job Cover Photo (Optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => e.target.files && handleUploadCover(e.target.files[0])}
-                    className={`w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold ${
-                      darkMode 
-                        ? "text-gray-300 file:bg-green-900 file:text-green-200 hover:file:bg-green-800" 
-                        : "text-gray-500 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                    }`}
-                  />
-                  {coverUrl && (
-                    <div className="mt-4">
-                      <img src={coverUrl} alt="Cover Preview" className="w-full h-40 object-cover rounded-lg shadow-md" />
-                      <p className={`text-xs mt-2 text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Cover photo preview - This will make your job post stand out</p>
-                    </div>
-                  )}
-                  {uploading && <p className={`text-sm mt-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Uploading cover photo...</p>}
+            {/* Cover Photo Upload */}
+            <div className={sectionClasses}>
+              <label className={`block text-sm font-semibold mb-3 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>🖼️ Job Cover Photo (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => e.target.files && handleUploadCover(e.target.files[0])}
+                className={`w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold ${
+                  darkMode 
+                    ? "text-gray-300 file:bg-green-900 file:text-green-200 hover:file:bg-green-800" 
+                    : "text-gray-500 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                }`}
+              />
+              {coverUrl && (
+                <div className="mt-4">
+                  <img src={coverUrl} alt="Cover Preview" className="w-full h-40 object-cover rounded-lg shadow-md" />
+                  <p className={`text-xs mt-2 text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Cover photo preview - This will make your job post stand out</p>
                 </div>
-              </div>
+              )}
+              {uploading && <p className={`text-sm mt-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Uploading cover photo...</p>}
             </div>
 
             {/* Submit Button */}

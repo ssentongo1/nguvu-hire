@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
+import { countries } from "@/utils/countries";
 import BoostPromotionBanner from "@/components/BoostPromotionBanner";
 
 // Create a separate component that uses useSearchParams
@@ -12,19 +13,23 @@ function PostAvailabilityContent() {
   const searchParams = useSearchParams();
   const { darkMode } = useTheme();
 
-  const [profile, setProfile] = useState<{ role?: string } | null>(null);
+  const [profile, setProfile] = useState<{ role?: string; country?: string } | null>(null);
   const [name, setName] = useState("");
   const [desiredJob, setDesiredJob] = useState("");
   const [country, setCountry] = useState("");
   const [skills, setSkills] = useState("");
   const [location, setLocation] = useState("");
   const [availability, setAvailability] = useState("");
+  const [description, setDescription] = useState("");
   const [cvUrl, setCvUrl] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingAvailabilityId, setEditingAvailabilityId] = useState<string | null>(null);
+  const [workLocationType, setWorkLocationType] = useState<"remote" | "onsite" | "hybrid">("onsite");
+  const [willingToRelocate, setWillingToRelocate] = useState(false);
+  const [preferredCountries, setPreferredCountries] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -34,13 +39,19 @@ function PostAvailabilityContent() {
 
       const { data } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, country")
         .eq("id", user.id)
         .single();
       setProfile(data ?? null);
+      
+      // Auto-set country from profile if available
+      if (data?.country && !isEditing) {
+        setCountry(data.country);
+        setLocation(data.country); // Set location to country by default
+      }
     };
     fetchProfile();
-  }, []);
+  }, [isEditing]);
 
   // Check if we're in edit mode and fetch availability data
   useEffect(() => {
@@ -68,8 +79,25 @@ function PostAvailabilityContent() {
         setSkills(availability.skills || "");
         setLocation(availability.location || "");
         setAvailability(availability.availability || "");
+        setDescription(availability.description || "");
         setCvUrl(availability.cv || "");
         setCoverImage(availability.cover_image || "");
+        
+        // Determine work location type based on location data
+        if (availability.location?.toLowerCase().includes('remote')) {
+          setWorkLocationType("remote");
+        } else if (availability.location?.toLowerCase().includes('hybrid')) {
+          setWorkLocationType("hybrid");
+        } else {
+          setWorkLocationType("onsite");
+        }
+        
+        // Extract preferred countries from description or location
+        const countriesInDescription = countries.filter(c => 
+          availability.description?.toLowerCase().includes(c.name.toLowerCase()) ||
+          availability.location?.toLowerCase().includes(c.name.toLowerCase())
+        );
+        setPreferredCountries(countriesInDescription.map(c => c.code));
       }
     } catch (error) {
       console.error("Error fetching availability data:", error);
@@ -97,6 +125,26 @@ function PostAvailabilityContent() {
     }
   };
 
+  const handleWorkLocationChange = (type: "remote" | "onsite" | "hybrid") => {
+    setWorkLocationType(type);
+    // Auto-update location field based on selection
+    if (type === "remote") {
+      setLocation("Remote - Available Worldwide");
+    } else if (type === "hybrid") {
+      setLocation(prev => prev === "Remote - Available Worldwide" ? "" : prev);
+    } else {
+      setLocation(prev => prev === "Remote - Available Worldwide" ? "" : prev);
+    }
+  };
+
+  const handleCountryToggle = (countryCode: string) => {
+    setPreferredCountries(prev => 
+      prev.includes(countryCode)
+        ? prev.filter(code => code !== countryCode)
+        : [...prev, countryCode]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -110,6 +158,16 @@ function PostAvailabilityContent() {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id;
       if (!userId) throw new Error("User not authenticated");
+
+      // Build description with location preferences
+      const locationPreferences = preferredCountries.length > 0 
+        ? `\n\n🌍 Location Preferences: Willing to work in ${preferredCountries.map(code => {
+            const country = countries.find(c => c.code === code);
+            return country ? `${country.flag} ${country.name}` : '';
+          }).join(', ')}`
+        : '';
+
+      const fullDescription = `${description}${locationPreferences}`;
 
       if (isEditing && editingAvailabilityId) {
         // Update existing availability
@@ -125,7 +183,7 @@ function PostAvailabilityContent() {
           availability,
           cv: cvUrl || null,
           cover_image: coverImage || null,
-          description: availability,
+          description: fullDescription,
         });
 
         const { data, error } = await supabase
@@ -139,12 +197,12 @@ function PostAvailabilityContent() {
             availability: availability,
             cv: cvUrl || null,
             cover_image: coverImage || null,
-            description: availability,
+            description: fullDescription,
             updated_at: new Date().toISOString(),
           })
           .eq("id", editingAvailabilityId)
           .eq("created_by", userId)
-          .select(); // Add .select() to get the updated data back
+          .select();
 
         if (error) {
           console.error("Update error:", error);
@@ -170,7 +228,7 @@ function PostAvailabilityContent() {
             availability,
             cv: cvUrl || null,
             cover_image: coverImage || null,
-            description: availability,
+            description: fullDescription,
             created_by: userId,
           },
         ]);
@@ -207,7 +265,7 @@ function PostAvailabilityContent() {
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gradient-to-br from-blue-900 via-purple-900 to-black" : "bg-gray-50"}`}>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className={`text-4xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
             {isEditing ? "Edit Availability" : "Post Your Availability"}
@@ -251,52 +309,165 @@ function PostAvailabilityContent() {
               </div>
 
               <div>
-                <label className={labelClasses}>Country *</label>
-                <input
-                  type="text"
-                  placeholder="Your country"
+                <label className={labelClasses}>Your Country *</label>
+                <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                   className={inputClasses}
                   required
-                />
+                >
+                  <option value="">Select your country</option>
+                  {countries.map(country => (
+                    <option key={country.code} value={country.name}>
+                      {country.flag} {country.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className={labelClasses}>Location / City *</label>
+                <label className={labelClasses}>Current City</label>
                 <input
                   type="text"
-                  placeholder="Your city or preferred work location"
+                  placeholder="Your current city"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className={inputClasses}
-                  required
                 />
               </div>
             </div>
 
+            {/* Work Location Preferences */}
+            <div>
+              <label className={labelClasses}>Work Location Preference *</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleWorkLocationChange("onsite")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    workLocationType === "onsite"
+                      ? "border-indigo-500 bg-indigo-500/10 text-indigo-600"
+                      : darkMode
+                      ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🏢</div>
+                  <div className="font-semibold">On-site</div>
+                  <div className="text-xs mt-1">Prefer office work</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleWorkLocationChange("remote")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    workLocationType === "remote"
+                      ? "border-indigo-500 bg-indigo-500/10 text-indigo-600"
+                      : darkMode
+                      ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🏠</div>
+                  <div className="font-semibold">Remote</div>
+                  <div className="text-xs mt-1">Work from anywhere</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleWorkLocationChange("hybrid")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    workLocationType === "hybrid"
+                      ? "border-indigo-500 bg-indigo-500/10 text-indigo-600"
+                      : darkMode
+                      ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🔀</div>
+                  <div className="font-semibold">Hybrid</div>
+                  <div className="text-xs mt-1">Flexible arrangement</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Preferred Work Countries */}
+            <div>
+              <label className={labelClasses}>
+                Where are you willing to work? *
+                <span className="text-sm font-normal ml-2 text-gray-500">
+                  (Select countries where you want to find jobs)
+                </span>
+              </label>
+              <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-xl border max-h-60 overflow-y-auto ${
+                darkMode ? "bg-gray-800 border-gray-600" : "bg-gray-50 border-gray-200"
+              }`}>
+                {countries.map(country => (
+                  <label key={country.code} className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-gray-700/30 transition">
+                    <input
+                      type="checkbox"
+                      checked={preferredCountries.includes(country.code)}
+                      onChange={() => handleCountryToggle(country.code)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className={`text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                      {country.flag} {country.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {preferredCountries.length > 0 && (
+                <p className={`text-sm mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>
+                  Willing to work in: {preferredCountries.map(code => {
+                    const country = countries.find(c => c.code === code);
+                    return country ? `${country.flag} ${country.name}` : '';
+                  }).join(', ')}
+                </p>
+              )}
+              <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Employers from these countries will see you in their "Candidates willing to work in" filter
+              </p>
+            </div>
+
             {/* Skills */}
             <div>
-              <label className={labelClasses}>Skills & Expertise</label>
+              <label className={labelClasses}>Skills & Expertise *</label>
               <textarea
                 placeholder="List your key skills, technologies, and areas of expertise (e.g., JavaScript, React, Project Management, UI/UX Design)"
                 value={skills}
                 onChange={(e) => setSkills(e.target.value)}
                 rows={3}
                 className={inputClasses}
+                required
               />
             </div>
 
             {/* Availability Details */}
             <div>
-              <label className={labelClasses}>Availability Details</label>
+              <label className={labelClasses}>Availability Details *</label>
               <textarea
-                placeholder="Describe your availability, preferred work type (full-time, part-time, contract), start date, and any other relevant information..."
+                placeholder="Describe your availability, preferred work type (full-time, part-time, contract), start date, notice period, and any other relevant information..."
                 value={availability}
                 onChange={(e) => setAvailability(e.target.value)}
                 rows={4}
                 className={inputClasses}
+                required
               />
+            </div>
+
+            {/* Personal Description */}
+            <div>
+              <label className={labelClasses}>Personal Description</label>
+              <textarea
+                placeholder="Tell employers about yourself, your experience, what you're looking for in a role, and why you'd be a great fit..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className={inputClasses}
+              />
+              <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                This helps employers understand your background and what you're looking for
+              </p>
             </div>
 
             {/* File Uploads */}

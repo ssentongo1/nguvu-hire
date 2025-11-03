@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { countries } from "@/utils/countries";
 
 export default function Home() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"job_seeker" | "employer">("job_seeker");
   const [employerType, setEmployerType] = useState("");
+  const [country, setCountry] = useState(""); // Added country state
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
@@ -49,6 +51,11 @@ export default function Home() {
           return;
         }
 
+        if (!country) {
+          setError("Please select your country");
+          return;
+        }
+
         const {
           data: { user },
           error: signUpError,
@@ -61,7 +68,7 @@ export default function Home() {
         if (signUpError) throw signUpError;
 
         if (user) {
-          // Create default profile with chosen role/employerType
+          // Create default profile with chosen role/employerType and country
           const response = await fetch("/api/create-profile", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -69,6 +76,7 @@ export default function Home() {
               userId: user.id,
               role,
               employerType: role === "employer" ? employerType : null,
+              country: country, // Added country
             }),
           });
 
@@ -159,6 +167,29 @@ export default function Home() {
                 <option value="recruiter">Recruiter</option>
                 <option value="freelancer">Freelancer</option>
               </select>
+            </div>
+          )}
+
+          {/* Country Selection - Added for signup */}
+          {!isLogin && (
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Country</label>
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              >
+                <option value="">-- Select Your Country --</option>
+                {countries.map(country => (
+                  <option key={country.code} value={country.name}>
+                    {country.flag} {country.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                This helps us show you relevant local opportunities
+              </p>
             </div>
           )}
 
