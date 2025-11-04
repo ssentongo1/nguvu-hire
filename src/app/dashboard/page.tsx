@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { LogOut, User, Briefcase, X, Crown } from "lucide-react"; // Added Crown icon
+import { LogOut, User, Briefcase, X, Crown } from "lucide-react";
 import JobCard from "./JobCard";
 import JobModal from "./JobModal";
 import AvailabilityCard from "./AvailabilityCard";
@@ -29,6 +29,8 @@ export type Job = {
   created_at: string;
   created_by: string;
   company?: string;
+  work_location_type?: "remote" | "onsite" | "hybrid";
+  remote_work_countries?: string[];
   boosted_posts?: {
     boost_end: string;
     is_active: boolean;
@@ -48,6 +50,8 @@ export type Availability = {
   cover_image?: string;
   created_at: string;
   created_by: string;
+  work_location_type?: "remote" | "onsite" | "hybrid";
+  remote_work_countries?: string[];
   boosted_posts?: {
     boost_end: string;
     is_active: boolean;
@@ -94,7 +98,6 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      {/* Improved modal container for mobile */}
       <div className={`rounded-xl shadow-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto ${
         darkMode ? "bg-gradient-to-br from-blue-700 via-purple-600 to-purple-800" : "bg-white"
       }`}>
@@ -159,7 +162,6 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
             </div>
           </div>
 
-          {/* Improved button layout for mobile */}
           <div className="flex flex-col sm:flex-row gap-3 mt-6">
             <button
               type="button"
@@ -241,7 +243,7 @@ export default function DashboardPage() {
     profile_picture_url?: string | null;
     role?: string;
     employer_type?: string;
-    country?: string; // Added country field
+    country?: string;
   } | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
@@ -320,7 +322,7 @@ export default function DashboardPage() {
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, company_name, profile_picture, profile_picture_url, role, employer_type, country") // Added country
+          .select("id, first_name, last_name, company_name, profile_picture, profile_picture_url, role, employer_type, country")
           .eq("id", user.id)
           .single();
 
@@ -746,15 +748,34 @@ export default function DashboardPage() {
     }
   };
 
-  // NEW FUNCTION: Clear all filters and show all posts
-  const handleClearFilters = async () => {
-    setSearchQuery("");
-    setFromCountry("");
-    setToCountry("");
+  // NEW FUNCTION: Show remote jobs/candidates
+  const handleShowRemote = async () => {
     setLoadingPosts(true);
-    
     try {
-      await fetchPosts(profile?.role);
+      if (profile?.role === "employer") {
+        // Show job seekers willing to work remotely
+        const { data, error } = await supabase
+          .from("availabilities")
+          .select("*")
+          .or(`work_location_type.eq.remote,location.ilike.%remote%,description.ilike.%remote%`)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setAvailabilities(data ?? []);
+      } else {
+        // Show remote jobs
+        const { data, error } = await supabase
+          .from("jobs")
+          .select("*")
+          .or(`work_location_type.eq.remote,location.ilike.%remote%,description.ilike.%remote%`)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setJobs(data ?? []);
+      }
+    } catch (err) {
+      console.error("Error fetching remote posts:", err);
+      alert("Error loading remote opportunities");
     } finally {
       setLoadingPosts(false);
     }
@@ -773,6 +794,11 @@ export default function DashboardPage() {
     } else {
       alert("Please set your country in your profile to use this feature");
     }
+  };
+
+  // FIXED: Wrapper function for fetchPosts that doesn't take parameters
+  const handleShowAll = () => {
+    fetchPosts();
   };
 
   // Open modals
@@ -900,10 +926,10 @@ export default function DashboardPage() {
           </p>
           {(fromCountry || toCountry) && (
             <button
-              onClick={handleClearFilters}
+              onClick={handleShowAll}
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
             >
-              Clear Filters
+              Show All
             </button>
           )}
         </div>
@@ -998,8 +1024,18 @@ export default function DashboardPage() {
           
           {/* SEARCH BARS ROW - MOBILE OPTIMIZED */}
           <div className="mt-4 space-y-3">
-            {/* QUICK ACTION BUTTONS */}
+            {/* QUICK ACTION BUTTONS - UPDATED WITH REMOTE BUTTON */}
             <div className="flex gap-2">
+              <button
+                onClick={handleShowRemote}
+                className={`px-3 py-2 rounded-md text-xs font-medium transition ${
+                  darkMode 
+                    ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
+                    : "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
+                }`}
+              >
+                Remote Jobs
+              </button>
               <button
                 onClick={handleShowLocal}
                 className={`px-3 py-2 rounded-md text-xs font-medium transition ${
@@ -1011,14 +1047,14 @@ export default function DashboardPage() {
                 Show Local
               </button>
               <button
-                onClick={handleClearFilters}
+                onClick={handleShowAll}
                 className={`px-3 py-2 rounded-md text-xs font-medium transition ${
                   darkMode 
                     ? "bg-gray-500 text-white hover:bg-gray-600 border border-gray-400"
                     : "bg-gray-300 text-gray-700 hover:bg-gray-400 border border-gray-300"
                 }`}
               >
-                Clear Filters
+                Show All
               </button>
             </div>
 

@@ -30,6 +30,8 @@ function PostAvailabilityContent() {
   const [workLocationType, setWorkLocationType] = useState<"remote" | "onsite" | "hybrid">("onsite");
   const [willingToRelocate, setWillingToRelocate] = useState(false);
   const [preferredCountries, setPreferredCountries] = useState<string[]>([]);
+  const [remoteWorkScope, setRemoteWorkScope] = useState<"worldwide" | "specific">("worldwide");
+  const [remoteWorkCountries, setRemoteWorkCountries] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -84,12 +86,20 @@ function PostAvailabilityContent() {
         setCoverImage(availability.cover_image || "");
         
         // Determine work location type based on location data
-        if (availability.location?.toLowerCase().includes('remote')) {
+        if (availability.work_location_type) {
+          setWorkLocationType(availability.work_location_type);
+        } else if (availability.location?.toLowerCase().includes('remote')) {
           setWorkLocationType("remote");
         } else if (availability.location?.toLowerCase().includes('hybrid')) {
           setWorkLocationType("hybrid");
         } else {
           setWorkLocationType("onsite");
+        }
+        
+        // Extract remote work countries if available
+        if (availability.remote_work_countries) {
+          setRemoteWorkCountries(availability.remote_work_countries);
+          setRemoteWorkScope("specific");
         }
         
         // Extract preferred countries from description or location
@@ -145,6 +155,14 @@ function PostAvailabilityContent() {
     );
   };
 
+  const handleRemoteCountryToggle = (countryCode: string) => {
+    setRemoteWorkCountries(prev => 
+      prev.includes(countryCode)
+        ? prev.filter(code => code !== countryCode)
+        : [...prev, countryCode]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -169,37 +187,31 @@ function PostAvailabilityContent() {
 
       const fullDescription = `${description}${locationPreferences}`;
 
+      const availabilityData = {
+        name: name,
+        desired_job: desiredJob,
+        country: country,
+        skills: skills,
+        location: location,
+        availability: availability,
+        cv: cvUrl || null,
+        cover_image: coverImage || null,
+        description: fullDescription,
+        work_location_type: workLocationType,
+        remote_work_countries: workLocationType === "remote" && remoteWorkScope === "specific" ? remoteWorkCountries : null,
+        updated_at: new Date().toISOString(),
+      };
+
       if (isEditing && editingAvailabilityId) {
         // Update existing availability
         console.log("=== DEBUG AVAILABILITY UPDATE ===");
         console.log("Availability ID:", editingAvailabilityId);
         console.log("User ID:", userId);
-        console.log("Data:", {
-          name,
-          desired_job: desiredJob,
-          country,
-          skills,
-          location,
-          availability,
-          cv: cvUrl || null,
-          cover_image: coverImage || null,
-          description: fullDescription,
-        });
+        console.log("Data:", availabilityData);
 
         const { data, error } = await supabase
           .from("availabilities")
-          .update({
-            name: name,
-            desired_job: desiredJob,
-            country: country,
-            skills: skills,
-            location: location,
-            availability: availability,
-            cv: cvUrl || null,
-            cover_image: coverImage || null,
-            description: fullDescription,
-            updated_at: new Date().toISOString(),
-          })
+          .update(availabilityData)
           .eq("id", editingAvailabilityId)
           .eq("created_by", userId)
           .select();
@@ -220,15 +232,7 @@ function PostAvailabilityContent() {
         // Create new availability
         const { error } = await supabase.from("availabilities").insert([
           {
-            name,
-            desired_job: desiredJob,
-            country,
-            skills,
-            location,
-            availability,
-            cv: cvUrl || null,
-            cover_image: coverImage || null,
-            description: fullDescription,
+            ...availabilityData,
             created_by: userId,
           },
         ]);
@@ -390,6 +394,79 @@ function PostAvailabilityContent() {
                 </button>
               </div>
             </div>
+
+            {/* Remote Work Scope - Only show if remote is selected */}
+            {workLocationType === "remote" && (
+              <div>
+                <label className={labelClasses}>Remote Work Scope *</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setRemoteWorkScope("worldwide")}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      remoteWorkScope === "worldwide"
+                        ? "border-green-500 bg-green-500/10 text-green-600"
+                        : darkMode
+                        ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-2xl mb-2">🌍</div>
+                    <div className="font-semibold">Worldwide</div>
+                    <div className="text-xs mt-1">Available to work from anywhere</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRemoteWorkScope("specific")}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      remoteWorkScope === "specific"
+                        ? "border-green-500 bg-green-500/10 text-green-600"
+                        : darkMode
+                        ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-2xl mb-2">📍</div>
+                    <div className="font-semibold">Specific Countries</div>
+                    <div className="text-xs mt-1">Choose where you can work from</div>
+                  </button>
+                </div>
+
+                {remoteWorkScope === "specific" && (
+                  <div>
+                    <label className={`${labelClasses} mb-3`}>
+                      Select countries where you can work remotely from:
+                    </label>
+                    <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-xl border max-h-60 overflow-y-auto ${
+                      darkMode ? "bg-gray-800 border-gray-600" : "bg-gray-50 border-gray-200"
+                    }`}>
+                      {countries.map(country => (
+                        <label key={country.code} className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-gray-700/30 transition">
+                          <input
+                            type="checkbox"
+                            checked={remoteWorkCountries.includes(country.code)}
+                            onChange={() => handleRemoteCountryToggle(country.code)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className={`text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                            {country.flag} {country.name}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    {remoteWorkCountries.length > 0 && (
+                      <p className={`text-sm mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>
+                        Available for remote work from: {remoteWorkCountries.map(code => {
+                          const country = countries.find(c => c.code === code);
+                          return country ? `${country.flag} ${country.name}` : '';
+                        }).join(', ')}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Preferred Work Countries */}
             <div>

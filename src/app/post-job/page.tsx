@@ -31,6 +31,8 @@ function PostJobContent() {
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [preferredCandidateCountries, setPreferredCandidateCountries] = useState<string[]>([]);
   const [workLocationType, setWorkLocationType] = useState<"remote" | "onsite" | "hybrid">("onsite");
+  const [remoteHiringScope, setRemoteHiringScope] = useState<"worldwide" | "specific">("worldwide");
+  const [remoteHiringCountries, setRemoteHiringCountries] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -86,12 +88,20 @@ function PostJobContent() {
         setPreferredCandidateCountries(job.preferred_candidate_countries || []);
         
         // Determine work location type based on location data
-        if (job.location?.toLowerCase().includes('remote')) {
+        if (job.work_location_type) {
+          setWorkLocationType(job.work_location_type);
+        } else if (job.location?.toLowerCase().includes('remote')) {
           setWorkLocationType("remote");
         } else if (job.location?.toLowerCase().includes('hybrid')) {
           setWorkLocationType("hybrid");
         } else {
           setWorkLocationType("onsite");
+        }
+        
+        // Extract remote hiring countries if available
+        if (job.remote_work_countries) {
+          setRemoteHiringCountries(job.remote_work_countries);
+          setRemoteHiringScope("specific");
         }
       }
     } catch (error) {
@@ -128,6 +138,14 @@ function PostJobContent() {
     );
   };
 
+  const handleRemoteCountryToggle = (countryCode: string) => {
+    setRemoteHiringCountries(prev => 
+      prev.includes(countryCode)
+        ? prev.filter(code => code !== countryCode)
+        : [...prev, countryCode]
+    );
+  };
+
   const handleWorkLocationChange = (type: "remote" | "onsite" | "hybrid") => {
     setWorkLocationType(type);
     // Auto-update location field based on selection
@@ -154,24 +172,28 @@ function PostJobContent() {
       const userId = userData?.user?.id;
       if (!userId) throw new Error("User not authenticated");
 
+      const jobData = {
+        title: title,
+        company: company,
+        country: country,
+        location: location,
+        responsibilities: responsibilities,
+        requirements: requirements,
+        description: description,
+        job_type: jobType,
+        salary: salary,
+        preferred_candidate_countries: preferredCandidateCountries,
+        work_location_type: workLocationType,
+        remote_work_countries: workLocationType === "remote" && remoteHiringScope === "specific" ? remoteHiringCountries : null,
+        cover_photo: coverUrl || null,
+        deadline: deadline || null,
+        updated_at: new Date().toISOString(),
+      };
+
       if (isEditing && editingJobId) {
         const { error } = await supabase
           .from("jobs")
-          .update({
-            title: title,
-            company: company,
-            country: country,
-            location: location,
-            responsibilities: responsibilities,
-            requirements: requirements,
-            description: description,
-            job_type: jobType,
-            salary: salary,
-            preferred_candidate_countries: preferredCandidateCountries,
-            cover_photo: coverUrl || null,
-            deadline: deadline || null,
-            updated_at: new Date().toISOString(),
-          })
+          .update(jobData)
           .eq("id", editingJobId);
 
         if (error) throw error;
@@ -181,18 +203,7 @@ function PostJobContent() {
       } else {
         const { error } = await supabase.from("jobs").insert([
           {
-            title,
-            company,
-            country,
-            location,
-            responsibilities,
-            requirements,
-            description,
-            job_type: jobType,
-            salary,
-            preferred_candidate_countries: preferredCandidateCountries,
-            cover_photo: coverUrl || null,
-            deadline: deadline || null,
+            ...jobData,
             created_by: userId,
           },
         ]);
@@ -377,6 +388,79 @@ function PostJobContent() {
                 </button>
               </div>
             </div>
+
+            {/* Remote Hiring Scope - Only show if remote is selected */}
+            {workLocationType === "remote" && (
+              <div>
+                <label className={labelClasses}>Remote Hiring Scope *</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setRemoteHiringScope("worldwide")}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      remoteHiringScope === "worldwide"
+                        ? "border-blue-500 bg-blue-500/10 text-blue-600"
+                        : darkMode
+                        ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-2xl mb-2">🌍</div>
+                    <div className="font-semibold">Worldwide</div>
+                    <div className="text-xs mt-1">Hire from anywhere in the world</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRemoteHiringScope("specific")}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      remoteHiringScope === "specific"
+                        ? "border-blue-500 bg-blue-500/10 text-blue-600"
+                        : darkMode
+                        ? "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-2xl mb-2">📍</div>
+                    <div className="font-semibold">Specific Countries</div>
+                    <div className="text-xs mt-1">Choose where to hire from</div>
+                  </button>
+                </div>
+
+                {remoteHiringScope === "specific" && (
+                  <div>
+                    <label className={`${labelClasses} mb-3`}>
+                      Select countries where you want to hire remote workers from:
+                    </label>
+                    <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-xl border max-h-60 overflow-y-auto ${
+                      darkMode ? "bg-gray-800 border-gray-600" : "bg-gray-50 border-gray-200"
+                    }`}>
+                      {countries.map(country => (
+                        <label key={country.code} className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-gray-700/30 transition">
+                          <input
+                            type="checkbox"
+                            checked={remoteHiringCountries.includes(country.code)}
+                            onChange={() => handleRemoteCountryToggle(country.code)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className={`text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                            {country.flag} {country.name}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    {remoteHiringCountries.length > 0 && (
+                      <p className={`text-sm mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>
+                        Will hire remote workers from: {remoteHiringCountries.map(code => {
+                          const country = countries.find(c => c.code === code);
+                          return country ? `${country.flag} ${country.name}` : '';
+                        }).join(', ')}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Specific Location */}
             <div>
