@@ -683,7 +683,7 @@ export default function DashboardPage() {
     }
   };
 
-  // UPDATED: Improved Location-Based Search Function
+  // CORRECTED: Location-Based Search Function with Proper Logic
   const handleRegionSearch = async () => {
     setLoadingRegionResults(true);
     try {
@@ -691,19 +691,20 @@ export default function DashboardPage() {
         // EMPLOYER VIEW: Find candidates based on location filters
         let query = supabase.from("availabilities").select("*");
 
+        // CORRECT: "I want to hire from" = candidates FROM specific countries
         if (fromCountry) {
-          // Find candidates FROM specific country
           const countryObj = countries.find(c => c.code === fromCountry);
           if (countryObj) {
             query = query.ilike("country", `%${countryObj.name}%`);
           }
         }
 
+        // CORRECT: "Job is located in" = candidates willing to work IN specific locations
         if (toCountry) {
-          // Find candidates willing to work IN specific country
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
-            query = query.ilike("location", `%${countryObj.name}%`);
+            // Search in location field for willingness to work there
+            query = query.or(`location.ilike.%${countryObj.name}%,description.ilike.%${countryObj.name}%`);
           }
         }
 
@@ -712,23 +713,23 @@ export default function DashboardPage() {
 
         setAvailabilities(data ?? []);
       } else {
-        // JOB SEEKER VIEW: Enhanced location-based job search
+        // JOB SEEKER VIEW: CORRECTED location-based job search
         let query = supabase.from("jobs").select("*");
 
-        // SCENARIO 1: Jobs located IN specific country (local jobs)
+        // CORRECT: "I am from" = Jobs that want to hire FROM my country
+        if (fromCountry) {
+          const countryObj = countries.find(c => c.code === fromCountry);
+          if (countryObj) {
+            // Jobs that prefer candidates FROM this country
+            query = query.contains("preferred_candidate_countries", [countryObj.name]);
+          }
+        }
+        
+        // CORRECT: "I want to work in" = Jobs located IN specific country
         if (toCountry) {
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
             query = query.ilike("country", `%${countryObj.name}%`);
-          }
-        }
-        
-        // SCENARIO 2: Jobs that are hiring FROM specific country (remote jobs targeting that country)
-        if (fromCountry) {
-          const countryObj = countries.find(c => c.code === fromCountry);
-          if (countryObj) {
-            // Search in preferred_candidate_countries array
-            query = query.contains("preferred_candidate_countries", [countryObj.name]);
           }
         }
 
@@ -1048,65 +1049,78 @@ export default function DashboardPage() {
               </div>
             </div>
             
-            {/* REGION SEARCH - Improved mobile responsive */}
-            <div className={`rounded-lg p-2 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
-              <div className="flex flex-col sm:flex-row gap-2">
-                {/* Country selects - Stack on mobile, side by side on larger screens */}
-                <div className="flex flex-col xs:flex-row gap-2 flex-1">
-                  <select
-                    value={fromCountry}
-                    onChange={(e) => setFromCountry(e.target.value)}
-                    className={`flex-1 px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-1 min-w-0 ${
-                      darkMode
-                        ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
-                        : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
-                    }`}
-                  >
-                    <option value="">
-                      {isEmployer ? "Candidates from" : "Jobs hiring from"}
-                    </option>
-                    {countries.map(country => (
-                      <option key={`from-${country.code}`} value={country.code}>
-                        {country.flag} {country.name}
-                      </option>
-                    ))}
-                  </select>
+            {/* REGION SEARCH - WITH EXTERNAL LABELS */}
+            <div className={`rounded-lg p-4 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Country selects with external labels */}
+                <div className="flex flex-col xs:flex-row gap-4 flex-1">
+                  {/* First dropdown with external label */}
+                  <div className="flex-1">
+                    <label className={`block text-sm font-semibold mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                      {isEmployer ? "📍 I want to hire from" : "📍 I am from"}
+                    </label>
+                    <select
+                      value={fromCountry}
+                      onChange={(e) => setFromCountry(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-1 ${
+                        darkMode
+                          ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
+                          : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
+                      }`}
+                    >
+                      <option value="">Select country</option>
+                      {countries.map(country => (
+                        <option key={`from-${country.code}`} value={country.code}>
+                          {country.flag} {country.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <select
-                    value={toCountry}
-                    onChange={(e) => setToCountry(e.target.value)}
-                    className={`flex-1 px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-1 min-w-0 ${
-                      darkMode
-                        ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
-                        : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
+                  {/* Second dropdown with external label */}
+                  <div className="flex-1">
+                    <label className={`block text-sm font-semibold mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                      {isEmployer ? "🏢 Job is located in" : "💼 I want to work in"}
+                    </label>
+                    <select
+                      value={toCountry}
+                      onChange={(e) => setToCountry(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-1 ${
+                        darkMode
+                          ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
+                          : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
+                      }`}
+                    >
+                      <option value="">Select country</option>
+                      {countries.map(country => (
+                        <option key={`to-${country.code}`} value={country.code}>
+                          {country.flag} {country.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Filter button */}
+                <div className="flex items-end">
+                  <button
+                    onClick={handleRegionSearch}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition sm:w-auto w-full ${
+                      darkMode 
+                        ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
+                        : "bg-blue-500 text-white hover:bg-blue-600 border border-blue-400"
                     }`}
                   >
-                    <option value="">
-                      {isEmployer ? "Candidates willing to work in" : "Jobs located in"}
-                    </option>
-                    {countries.map(country => (
-                      <option key={`to-${country.code}`} value={country.code}>
-                        {country.flag} {country.name}
-                      </option>
-                    ))}
-                  </select>
+                    Find Opportunities
+                  </button>
                 </div>
-                <button
-                  onClick={handleRegionSearch}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition sm:w-auto w-full ${
-                    darkMode 
-                      ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
-                      : "bg-blue-500 text-white hover:bg-blue-600 border border-blue-400"
-                  }`}
-                >
-                  Filter Region
-                </button>
               </div>
+              
               {/* Help text */}
-              <p className={`text-xs mt-2 ${textMuted}`}>
+              <p className={`text-xs mt-3 ${textMuted}`}>
                 {isEmployer 
-                  ? "Find candidates from specific countries or willing to work in specific locations"
-                  : "Find remote jobs hiring from your country or local jobs in specific countries"
+                  ? "Find candidates from specific countries for jobs in specific locations"
+                  : "Find jobs that want to hire people from your country or jobs in specific locations"
                 }
               </p>
             </div>
