@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import JobModal from "@/app/dashboard/JobModal"; // REUSE EXISTING MODAL
+import JobModal from "@/app/dashboard/JobModal"; 
 
 // Define types
 type Job = {
@@ -17,11 +17,16 @@ type Job = {
   preferred_location?: string; 
   location: string;
   country: string;
+  preferred_candidate_countries?: string[]; 
   cover_photo?: string | null;
   deadline?: string;  
   created_at: string;
   created_by: string;
   company?: string;
+  work_location_type?: "remote" | "onsite" | "hybrid";
+  remote_work_countries?: string[];
+  job_type?: string;
+  salary?: string;
 };
 
 type Availability = {
