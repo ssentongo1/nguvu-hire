@@ -12,6 +12,7 @@ import AvailabilityModal from "./AvailabilityModal";
 import AdModal from "./AdModal";
 import NotificationsBell from "@/components/NotificationsBell";
 import { countries } from "@/utils/countries";
+import Pagination from "@/components/Pagination";
 
 // Define types locally in this file
 export type Job = {
@@ -261,6 +262,10 @@ export default function DashboardPage() {
   const [showHireModal, setShowHireModal] = useState(false);
   const [selectedAvailabilityForHire, setSelectedAvailabilityForHire] = useState<Availability | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 12; // 12 posts + 3 ads = 15 total cards per page
+
   // Real ad placements from database
   const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
 
@@ -282,6 +287,18 @@ export default function DashboardPage() {
     return country?.code || "";
   };
 
+  // Calculate pagination values
+  const isEmployer = profile?.role === "employer";
+  const displayItems = isEmployer ? availabilities : jobs;
+  
+  // Calculate total pages based on actual posts (not including ads in count)
+  const totalPages = Math.ceil(displayItems.length / postsPerPage);
+
+  // Get current posts for the page
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = displayItems.slice(indexOfFirstPost, indexOfLastPost);
+
   // Auto-detect user's country and set filters
   useEffect(() => {
     if (profile?.country && !fromCountry && !toCountry) {
@@ -292,6 +309,11 @@ export default function DashboardPage() {
       }
     }
   }, [profile, fromCountry, toCountry]);
+
+  // Reset to page 1 when posts change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [displayItems.length]);
 
   // Debug logging
   useEffect(() => {
@@ -304,9 +326,12 @@ export default function DashboardPage() {
       initialLoading,
       userCountry: profile?.country,
       fromCountry,
-      toCountry
+      toCountry,
+      currentPage,
+      totalPages,
+      currentPostsCount: currentPosts.length
     });
-  }, [profile, jobs, availabilities, userType, loadingPosts, initialLoading, fromCountry, toCountry]);
+  }, [profile, jobs, availabilities, userType, loadingPosts, initialLoading, fromCountry, toCountry, currentPage, totalPages, currentPosts]);
 
   // Fetch profile and posts on load
   useEffect(() => {
@@ -693,15 +718,16 @@ export default function DashboardPage() {
         // EMPLOYER VIEW: Find candidates based on location filters
         let query = supabase.from("availabilities").select("*");
 
-        // CORRECT: "I want to hire from" = candidates FROM specific countries
+        // FIXED: Search for candidates FROM specific countries
         if (fromCountry) {
           const countryObj = countries.find(c => c.code === fromCountry);
           if (countryObj) {
+            // Search in country field for candidates FROM that country
             query = query.ilike("country", `%${countryObj.name}%`);
           }
         }
 
-        // CORRECT: "Job is located in" = candidates willing to work IN specific locations
+        // FIXED: Search for candidates willing to work IN specific locations
         if (toCountry) {
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
@@ -715,22 +741,23 @@ export default function DashboardPage() {
 
         setAvailabilities(data ?? []);
       } else {
-        // JOB SEEKER VIEW: CORRECTED location-based job search
+        // JOB SEEKER VIEW: FIXED location-based job search
         let query = supabase.from("jobs").select("*");
 
-        // CORRECT: "I am from" = Jobs that want to hire FROM my country
+        // FIXED: "I am from" = Jobs that want to hire FROM my country
         if (fromCountry) {
           const countryObj = countries.find(c => c.code === fromCountry);
           if (countryObj) {
             // Jobs that prefer candidates FROM this country
-            query = query.contains("preferred_candidate_countries", [countryObj.name]);
+            query = query.contains("preferred_candidate_countries", [countryObj.code]);
           }
         }
         
-        // CORRECT: "I want to work in" = Jobs located IN specific country
+        // FIXED: "I want to work in" = Jobs located IN specific country
         if (toCountry) {
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
+            // Jobs located in this country
             query = query.ilike("country", `%${countryObj.name}%`);
           }
         }
@@ -748,7 +775,7 @@ export default function DashboardPage() {
     }
   };
 
-  // NEW FUNCTION: Show remote jobs/candidates
+  // FIXED: Show remote jobs/candidates
   const handleShowRemote = async () => {
     setLoadingPosts(true);
     try {
@@ -781,13 +808,15 @@ export default function DashboardPage() {
     }
   };
 
-  // NEW FUNCTION: Show local jobs/candidates (user's country)
+  // FIXED: Show local jobs/candidates (user's country)
   const handleShowLocal = async () => {
     const userCountryCode = getUserCountryCode();
     if (userCountryCode) {
+      // Set both filters to user's country
       setFromCountry(userCountryCode);
       setToCountry(userCountryCode);
-      // Trigger search after a short delay to ensure state is updated
+      
+      // Wait for state to update, then trigger search
       setTimeout(() => {
         handleRegionSearch();
       }, 100);
@@ -799,6 +828,13 @@ export default function DashboardPage() {
   // FIXED: Wrapper function for fetchPosts that doesn't take parameters
   const handleShowAll = () => {
     fetchPosts();
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Open modals
@@ -817,8 +853,6 @@ export default function DashboardPage() {
   };
 
   // Determine what to display based on user role
-  const isEmployer = profile?.role === "employer";
-  const displayItems = isEmployer ? availabilities : jobs;
   const noPostsMessage = isEmployer 
     ? "No job seekers found" 
     : "No jobs found";
@@ -887,15 +921,15 @@ export default function DashboardPage() {
     </div>
   );
 
-  // Function to render posts with ads inserted after every 9 posts (3 rows)
+  // Function to render posts with ads inserted after every 9 posts (3 rows) - RESTORED YOUR ORIGINAL LOGIC
   const renderPostsWithAds = () => {
-    const items = isEmployer ? availabilities : jobs;
-    
     console.log("Rendering items:", {
       isEmployer,
-      itemsCount: items.length,
+      itemsCount: currentPosts.length,
       jobsCount: jobs.length,
-      availabilitiesCount: availabilities.length
+      availabilitiesCount: availabilities.length,
+      currentPage,
+      totalPages
     });
 
     if (loadingPosts) {
@@ -909,7 +943,7 @@ export default function DashboardPage() {
       );
     }
 
-    if (items.length === 0) {
+    if (currentPosts.length === 0) {
       return (
         <div className="col-span-3 text-center py-12">
           <div className="text-gray-400 text-6xl mb-4">
@@ -938,8 +972,8 @@ export default function DashboardPage() {
 
     const elements: React.JSX.Element[] = [];
     
-    // Insert ads after every 9 posts (after 3 rows)
-    items.forEach((item, index) => {
+    // RESTORED: Your original ad placement logic - insert ads after every 9 posts
+    currentPosts.forEach((item, index) => {
       if (isEmployer) {
         const availability = item as Availability;
         elements.push(
@@ -968,6 +1002,7 @@ export default function DashboardPage() {
         );
       }
 
+      // RESTORED: Insert ads after every 9 posts (your original logic)
       if ((index + 1) % 9 === 0 && adPlacements.length > 0) {
         adPlacements.forEach((ad) => {
           elements.push(renderAdPlacement(ad));
@@ -1283,6 +1318,20 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {renderPostsWithAds()}
       </div>
+
+      {/* Pagination Component */}
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+          <div className="text-center text-gray-600 dark:text-gray-300 mt-4 text-sm">
+            Showing {indexOfFirstPost + 1}-{Math.min(indexOfLastPost, displayItems.length)} of {displayItems.length} {isEmployer ? "job seekers" : "jobs"}
+          </div>
+        </div>
+      )}
 
       {/* Logout Button - Mobile Optimized */}
       <button

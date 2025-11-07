@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useTheme } from "@/context/ThemeContext";
 import ApplyForm from "@/components/ApplyForm";
+import { countries } from "@/utils/countries";
 
 type Job = {
   id: string;
@@ -13,11 +14,16 @@ type Job = {
   preferred_location?: string; 
   location: string;
   country: string;
+  preferred_candidate_countries: string[];
   cover_photo?: string | null;
   deadline?: string;  
   created_at: string;
   created_by: string;
   company?: string;
+  work_location_type?: "remote" | "onsite" | "hybrid";
+  remote_work_countries?: string[];
+  job_type?: string;
+  salary?: string;
 };
 
 type Props = {
@@ -37,6 +43,29 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
   const bgPrimary = darkMode ? "bg-gradient-to-br from-blue-700 via-purple-600 to-purple-800" : "bg-white";
   const bgSecondary = darkMode ? "bg-purple-500/30" : "bg-gray-50";
   const borderColor = darkMode ? "border-purple-500" : "border-gray-200";
+
+  // Get country info
+  const jobCountry = countries.find(c => c.code === job.country);
+  const preferredCountries = job.preferred_candidate_countries?.map(code => 
+    countries.find(c => c.code === code)
+  ).filter(Boolean);
+
+  // Work location type display
+  const getWorkLocationDisplay = () => {
+    if (job.work_location_type === "remote") return "🌍 Remote";
+    if (job.work_location_type === "hybrid") return "🔀 Hybrid";
+    return "🏢 On-site";
+  };
+
+  // Remote work countries display
+  const getRemoteWorkCountries = () => {
+    if (!job.remote_work_countries || job.remote_work_countries.length === 0) return null;
+    
+    return job.remote_work_countries.map(code => {
+      const country = countries.find(c => c.code === code);
+      return country ? `${country.flag} ${country.name}` : '';
+    }).filter(Boolean).join(', ');
+  };
 
   // Deadline functions
   const isDeadlineApproaching = (deadline: string) => {
@@ -66,6 +95,24 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
     setShowApplyForm(false);
   };
 
+  // Function to format text with bullet points
+  const formatTextWithBullets = (text: string) => {
+    if (!text) return null;
+    
+    const lines = text.split('\n').filter(line => line.trim());
+    return lines.map((line, index) => {
+      const trimmedLine = line.trim();
+      const isBullet = trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*');
+      
+      return (
+        <div key={index} className="flex items-start mb-2">
+          {isBullet && <span className="mr-3 text-lg">•</span>}
+          <span className={isBullet ? "flex-1" : ""}>{trimmedLine}</span>
+        </div>
+      );
+    });
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -73,17 +120,42 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
           {/* Header */}
           <div className={`p-6 border-b ${borderColor}`}>
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1">
                 <h2 className={`text-2xl font-bold ${textPrimary}`}>
                   {job.title}
                 </h2>
-                <p className={`${textSecondary} mt-2`}>
-                  {job.company} • {job.location}, {job.country}
+                <p className={`${textSecondary} mt-2 text-lg`}>
+                  {job.company} • {job.location}, {jobCountry?.flag} {jobCountry?.name}
                 </p>
+                
+                {/* Job Type and Salary */}
+                <div className="flex flex-wrap gap-4 mt-3">
+                  {job.job_type && (
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      darkMode ? 'bg-purple-500/40 text-purple-100' : 'bg-purple-100 text-purple-800'
+                    }`}>
+                      💼 {job.job_type}
+                    </span>
+                  )}
+                  
+                  {job.salary && (
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      darkMode ? 'bg-green-500/40 text-green-100' : 'bg-green-100 text-green-800'
+                    }`}>
+                      💰 {job.salary}
+                    </span>
+                  )}
+                  
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    darkMode ? 'bg-blue-500/40 text-blue-100' : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {getWorkLocationDisplay()}
+                  </span>
+                </div>
               </div>
               <button
                 onClick={onClose}
-                className={`${textMuted} hover:${textSecondary} text-2xl`}
+                className={`${textMuted} hover:${textSecondary} text-2xl ml-4`}
               >
                 ×
               </button>
@@ -92,16 +164,46 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
 
           {/* Content */}
           <div className="p-6 space-y-6">
-            {/* Cover Photo - INCREASED SIZE */}
+            {/* Cover Photo */}
             {job.cover_photo && (
-              <div className="w-full h-80 bg-gray-300 dark:bg-gray-700 flex items-center justify-center overflow-hidden"> {/* INCREASED: from h-64 to h-80 */}
+              <div className="w-full h-80 bg-gray-300 dark:bg-gray-700 flex items-center justify-center overflow-hidden rounded-xl">
                 <img
                   src={job.cover_photo}
                   alt={job.title}
-                  className="w-full h-80 object-cover rounded-lg"  /* INCREASED: from h-64 to h-80 */
+                  className="w-full h-80 object-cover rounded-xl"
                 />
               </div>
             )}
+
+            {/* Job Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Preferred Candidate Countries */}
+              {preferredCountries && preferredCountries.length > 0 && (
+                <div className={`p-4 rounded-lg border ${darkMode ? 'bg-purple-500/20 border-purple-400' : 'bg-purple-50 border-purple-200'}`}>
+                  <h4 className={`font-semibold mb-2 ${textPrimary}`}>🌍 Hiring From</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {preferredCountries.map((country, index) => (
+                      <span 
+                        key={index}
+                        className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                          darkMode ? 'bg-purple-400/40 text-purple-100' : 'bg-purple-100 text-purple-800'
+                        }`}
+                      >
+                        {country?.flag} {country?.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Remote Work Countries */}
+              {getRemoteWorkCountries() && (
+                <div className={`p-4 rounded-lg border ${darkMode ? 'bg-blue-500/20 border-blue-400' : 'bg-blue-50 border-blue-200'}`}>
+                  <h4 className={`font-semibold mb-2 ${textPrimary}`}>📍 Remote Work Available In</h4>
+                  <p className={`text-sm ${textSecondary}`}>{getRemoteWorkCountries()}</p>
+                </div>
+              )}
+            </div>
 
             {/* Deadline */}
             {job.deadline && (
@@ -143,43 +245,43 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
 
             {/* Job Description */}
             <div>
-              <h3 className={`text-lg font-semibold ${textPrimary} mb-3`}>
-                Job Description
+              <h3 className={`text-xl font-semibold ${textPrimary} mb-4`}>
+                📝 Job Description
               </h3>
-              <p className={`${textSecondary} whitespace-pre-line`}>
-                {job.description}
-              </p>
+              <div className={`${textSecondary} whitespace-pre-line leading-relaxed`}>
+                {formatTextWithBullets(job.description) || job.description}
+              </div>
             </div>
 
             {/* Responsibilities */}
             {job.responsibilities && (
               <div>
-                <h3 className={`text-lg font-semibold ${textPrimary} mb-3`}>
-                  Key Responsibilities
+                <h3 className={`text-xl font-semibold ${textPrimary} mb-4`}>
+                  🎯 Key Responsibilities
                 </h3>
-                <p className={`${textSecondary} whitespace-pre-line`}>
-                  {job.responsibilities}
-                </p>
+                <div className={`${textSecondary} leading-relaxed`}>
+                  {formatTextWithBullets(job.responsibilities)}
+                </div>
               </div>
             )}
 
             {/* Requirements */}
             {job.requirements && (
               <div>
-                <h3 className={`text-lg font-semibold ${textPrimary} mb-3`}>
-                  Requirements
+                <h3 className={`text-xl font-semibold ${textPrimary} mb-4`}>
+                  ✅ Requirements & Qualifications
                 </h3>
-                <p className={`${textSecondary} whitespace-pre-line`}>
-                  {job.requirements}
-                </p>
+                <div className={`${textSecondary} leading-relaxed`}>
+                  {formatTextWithBullets(job.requirements)}
+                </div>
               </div>
             )}
 
             {/* Preferred Location */}
             {job.preferred_location && (
               <div>
-                <h3 className={`text-lg font-semibold ${textPrimary} mb-3`}>
-                  Preferred Location
+                <h3 className={`text-xl font-semibold ${textPrimary} mb-4`}>
+                  📍 Preferred Location
                 </h3>
                 <p className={`${textSecondary}`}>
                   {job.preferred_location}
@@ -197,15 +299,15 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
               <button
                 onClick={() => setShowApplyForm(true)}
                 disabled={isApplyDisabled}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${
+                className={`px-8 py-3 rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 ${
                   isApplyDisabled
                     ? 'bg-gray-400 text-white cursor-not-allowed'
                     : darkMode
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
                 }`}
               >
-                {isApplyDisabled ? 'Application Closed' : 'Apply Now'}
+                {isApplyDisabled ? 'Application Closed' : '🚀 Apply Now'}
               </button>
             </div>
           </div>

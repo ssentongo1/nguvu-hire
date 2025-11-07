@@ -88,31 +88,31 @@ export default function AvailabilityCard({
             {new Date(availability.created_at).toLocaleDateString()}
           </span>
           <div className="flex gap-2 w-full xs:w-auto">
-            {/* View Profile Button */}
+            {/* View Profile Button - Enhanced */}
             <button
-              className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition flex items-center justify-center flex-1 xs:flex-none min-w-[100px]"
+              className="px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg font-semibold flex items-center justify-center flex-1 xs:flex-none min-w-[100px]"
               onClick={(e) => {
                 e.stopPropagation();
                 if (onViewProfile) {
-                  onViewProfile(); // Navigate to profile page
+                  onViewProfile();
                 } else {
-                  onClick(); // Fallback to original behavior
+                  onClick();
                 }
               }}
             >
-              View Profile
+              👤 View Profile
             </button>
             
-            {/* Hire Button - Only show for employers viewing others' profiles */}
+            {/* Hire Button - Enhanced */}
             {showHireButton && onHire && (
               <button
-                className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition flex items-center justify-center flex-1 xs:flex-none min-w-[70px]"
+                className="px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg font-semibold flex items-center justify-center flex-1 xs:flex-none min-w-[70px]"
                 onClick={(e) => {
                   e.stopPropagation();
                   onHire();
                 }}
               >
-                Hire
+                💼 Hire
               </button>
             )}
           </div>

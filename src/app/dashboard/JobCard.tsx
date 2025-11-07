@@ -210,28 +210,28 @@ export default function JobCard({ job, onClick, canDelete, onDelete, onViewProfi
           )}
           
           {/* Bottom row: date + buttons */}
-          <div className="mt-auto flex justify-between items-center pt-2">
+          <div className="mt-auto flex justify-between items-center pt-3">
             <span className={`text-xs ${textMuted}`}>
               {new Date(job.created_at).toLocaleDateString()}
             </span>
-            <div className="flex gap-1">
-              {/* UPDATED: View Profile button with consistent styling */}
+            <div className="flex gap-2">
+              {/* UPDATED: View Profile button with vibrant styling */}
               <button
-                className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center justify-center min-w-[100px]"
+                className="px-3 py-2 text-xs bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg font-semibold flex items-center justify-center min-w-[100px]"
                 onClick={handleViewProfile}
               >
-                View Company
+                👔 View Company
               </button>
               <button
-                className={`px-2 py-1 text-xs rounded transition flex items-center justify-center min-w-[70px] ${
+                className={`px-3 py-2 text-xs rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg font-semibold flex items-center justify-center min-w-[80px] ${
                   isApplyDisabled
-                    ? 'bg-gray-400 text-white cursor-not-allowed'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    ? 'bg-gray-400 text-white cursor-not-allowed hover:scale-100'
+                    : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700'
                 }`}
                 onClick={handleApplyClick}
                 disabled={isApplyDisabled}
               >
-                {isApplyDisabled ? 'Expired' : 'Apply'}
+                {isApplyDisabled ? '❌ Expired' : '🚀 Apply'}
               </button>
             </div>
           </div>
