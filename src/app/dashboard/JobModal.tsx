@@ -14,7 +14,7 @@ type Job = {
   preferred_location?: string; 
   location: string;
   country: string;
-  preferred_candidate_countries: string[];
+  preferred_candidate_countries: string[]; // CHANGED: Made this required
   cover_photo?: string | null;
   deadline?: string;  
   created_at: string;
