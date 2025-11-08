@@ -104,7 +104,7 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
       }`}>
         <div className={`p-4 sm:p-6 border-b ${darkMode ? "border-purple-500" : "border-gray-200"} sticky top-0 bg-inherit`}>
           <div className="flex justify-between items-center">
-            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+            <h2 className={`text-base sm:text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
               Hire {availability.name}
             </h2>
             <button
@@ -113,10 +113,10 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
                 darkMode ? "hover:bg-purple-500" : "hover:bg-gray-200"
               }`}
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
-          <p className={`text-xs sm:text-sm mt-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+          <p className={`text-xs mt-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
             For: {availability.desired_job}
           </p>
         </div>
@@ -124,14 +124,14 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
         <form onSubmit={handleSubmit} className="p-4 sm:p-6">
           <div className="space-y-4">
             <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+              <label className={`block text-xs font-medium mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                 Message to Candidate *
               </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={3}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base ${
+                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
                   darkMode 
                     ? "bg-purple-500/20 border-purple-400 text-white placeholder-gray-400" 
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
@@ -142,14 +142,14 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
             </div>
 
             <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+              <label className={`block text-xs font-medium mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                 Your Contact Information *
               </label>
               <textarea
                 value={contactInfo}
                 onChange={(e) => setContactInfo(e.target.value)}
                 rows={2}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base ${
+                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
                   darkMode 
                     ? "bg-purple-500/20 border-purple-400 text-white placeholder-gray-400" 
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
@@ -167,7 +167,7 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition text-sm sm:text-base ${
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition text-sm ${
                 darkMode 
                   ? "bg-purple-500 text-white hover:bg-purple-600" 
                   : "bg-gray-200 text-gray-900 hover:bg-gray-300"
@@ -178,7 +178,7 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
             <button
               type="submit"
               disabled={isSubmitting || !message.trim() || !contactInfo.trim()}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium text-white transition text-sm sm:text-base ${
+              className={`flex-1 px-4 py-3 rounded-lg font-medium text-white transition text-sm ${
                 isSubmitting || !message.trim() || !contactInfo.trim()
                   ? "bg-blue-400 cursor-not-allowed"
                   : "bg-blue-500 hover:bg-blue-600"
@@ -202,13 +202,13 @@ function OptimizedImage({ src, alt, className, onClick }: { src: string; alt: st
     <div className={`relative ${className}`} onClick={onClick}>
       {!imageLoaded && !imageError && (
         <div className="absolute inset-0 bg-gray-200 dark:bg-gray-600 animate-pulse flex items-center justify-center">
-          <div className="text-gray-400">Loading...</div>
+          <div className="text-gray-400 text-xs">Loading...</div>
         </div>
       )}
       {imageError ? (
         <div className="absolute inset-0 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
           <div className="text-center text-gray-400">
-            <div className="text-2xl mb-1">📷</div>
+            <div className="text-lg mb-1">📷</div>
             <p className="text-xs">Image not available</p>
           </div>
         </div>
@@ -235,6 +235,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { darkMode, toggleDarkMode } = useTheme();
 
+  const [activeTab, setActiveTab] = useState<"jobs" | "talent" | "services">("jobs");
   const [profile, setProfile] = useState<{ 
     id?: string; 
     first_name?: string; 
@@ -289,7 +290,18 @@ export default function DashboardPage() {
 
   // Calculate pagination values
   const isEmployer = profile?.role === "employer";
-  const displayItems = isEmployer ? availabilities : jobs;
+  
+  // Determine which items to display based on active tab
+  const getDisplayItems = () => {
+    if (activeTab === "jobs") {
+      return isEmployer ? [] : jobs; // Employers don't see jobs in jobs tab
+    } else if (activeTab === "talent") {
+      return isEmployer ? availabilities : []; // Job seekers don't see talent in talent tab
+    }
+    return []; // Services tab empty for now
+  };
+
+  const displayItems = getDisplayItems();
   
   // Calculate total pages based on actual posts (not including ads in count)
   const totalPages = Math.ceil(displayItems.length / postsPerPage);
@@ -329,9 +341,10 @@ export default function DashboardPage() {
       toCountry,
       currentPage,
       totalPages,
-      currentPostsCount: currentPosts.length
+      currentPostsCount: currentPosts.length,
+      activeTab
     });
-  }, [profile, jobs, availabilities, userType, loadingPosts, initialLoading, fromCountry, toCountry, currentPage, totalPages, currentPosts]);
+  }, [profile, jobs, availabilities, userType, loadingPosts, initialLoading, fromCountry, toCountry, currentPage, totalPages, currentPosts, activeTab]);
 
   // Fetch profile and posts on load
   useEffect(() => {
@@ -421,7 +434,40 @@ export default function DashboardPage() {
         } else {
           setAvailabilities([]);
         }
-        setJobs([]);
+        
+        // Also fetch jobs for the jobs tab
+        const { data: jobsData, error: jobsError } = await supabase
+          .from("jobs")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (jobsError) {
+          console.error("Error fetching jobs:", jobsError);
+        } else {
+          const enrichedJobs = await Promise.all(
+            (jobsData || []).map(async (job) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("username, avatar_url, full_name, company_name")
+                .eq("id", job.created_by)
+                .single();
+              
+              const { data: boostData } = await supabase
+                .from("boosted_posts")
+                .select("boost_end, is_active")
+                .eq("post_id", job.id)
+                .eq("post_type", "job")
+                .single();
+
+              return {
+                ...job,
+                profiles: profileData || null,
+                boosted_posts: boostData ? [boostData] : []
+              };
+            })
+          );
+          setJobs(enrichedJobs);
+        }
       } else {
         // SIMPLE QUERY - Get jobs first
         const { data, error } = await supabase
@@ -467,7 +513,40 @@ export default function DashboardPage() {
         } else {
           setJobs([]);
         }
-        setAvailabilities([]);
+        
+        // Also fetch availabilities for the talent tab
+        const { data: availabilitiesData, error: availabilitiesError } = await supabase
+          .from("availabilities")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (availabilitiesError) {
+          console.error("Error fetching availabilities:", availabilitiesError);
+        } else {
+          const enrichedAvailabilities = await Promise.all(
+            (availabilitiesData || []).map(async (availability) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("username, avatar_url, full_name")
+                .eq("id", availability.created_by)
+                .single();
+              
+              const { data: boostData } = await supabase
+                .from("boosted_posts")
+                .select("boost_end, is_active")
+                .eq("post_id", availability.id)
+                .eq("post_type", "availability")
+                .single();
+
+              return {
+                ...availability,
+                profiles: profileData || null,
+                boosted_posts: boostData ? [boostData] : []
+              };
+            })
+          );
+          setAvailabilities(enrichedAvailabilities);
+        }
       }
     } catch (err) {
       console.error("Error loading posts:", err);
@@ -852,10 +931,16 @@ export default function DashboardPage() {
     setSelectedAd(ad);
   };
 
-  // Determine what to display based on user role
-  const noPostsMessage = isEmployer 
-    ? "No job seekers found" 
-    : "No jobs found";
+  // Determine what to display based on user role and active tab
+  const getNoPostsMessage = () => {
+    if (activeTab === "jobs") {
+      return isEmployer ? "Switch to Job Seeker account to view jobs" : "No jobs found";
+    } else if (activeTab === "talent") {
+      return isEmployer ? "No job seekers found" : "Switch to Employer account to view talent";
+    } else {
+      return "Services coming soon";
+    }
+  };
 
   // Function to render ad placements with same styling as JobCard
   const renderAdPlacement = (ad: AdPlacement) => (
@@ -888,18 +973,18 @@ export default function DashboardPage() {
           />
         ) : (
           <div className="text-center text-gray-600 dark:text-gray-300">
-            <div className="text-4xl mb-2">📢</div>
-            <p className="text-sm">Sponsored Content</p>
+            <div className="text-3xl mb-2">📢</div>
+            <p className="text-xs">Sponsored Content</p>
           </div>
         )}
       </div>
       
       <div className="p-4 flex-1 flex flex-col">
-        <h3 className={`font-bold text-lg line-clamp-1 mb-2 ${textPrimary}`}>
+        <h3 className={`font-semibold text-sm line-clamp-1 mb-2 ${textPrimary}`}>
           {ad.title}
         </h3>
         
-        <p className={`text-sm line-clamp-2 mb-4 leading-relaxed ${textMuted}`}>
+        <p className={`text-xs line-clamp-2 mb-4 leading-relaxed ${textMuted}`}>
           {ad.description}
         </p>
         
@@ -925,6 +1010,7 @@ export default function DashboardPage() {
   const renderPostsWithAds = () => {
     console.log("Rendering items:", {
       isEmployer,
+      activeTab,
       itemsCount: currentPosts.length,
       jobsCount: jobs.length,
       availabilitiesCount: availabilities.length,
@@ -935,9 +1021,9 @@ export default function DashboardPage() {
     if (loadingPosts) {
       return (
         <div className="col-span-3 text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className={`text-lg ${textMuted}`}>
-            Loading {isEmployer ? "job seekers" : "jobs"}...
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+          <p className={`text-sm ${textMuted}`}>
+            Loading {activeTab === "jobs" ? "jobs" : activeTab === "talent" ? "talent" : "services"}...
           </p>
         </div>
       );
@@ -945,23 +1031,23 @@ export default function DashboardPage() {
 
     if (currentPosts.length === 0) {
       return (
-        <div className="col-span-3 text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">
-            {isEmployer ? "👥" : "💼"}
+        <div className="col-span-3 text-center py-8">
+          <div className="text-gray-400 text-4xl mb-3">
+            {activeTab === "jobs" ? "💼" : activeTab === "talent" ? "👥" : "🛠️"}
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {noPostsMessage}
+          <h3 className="text-sm font-medium mb-2">
+            {getNoPostsMessage()}
           </h3>
-          <p className="text-gray-600 max-w-md mx-auto text-sm">
-            {isEmployer 
-              ? "When job seekers post their availability, they will appear here." 
-              : "When employers post jobs, they will appear here."
+          <p className="text-xs text-gray-600 max-w-md mx-auto">
+            {activeTab === "services" 
+              ? "We're working on bringing you professional services to enhance your experience."
+              : (fromCountry || toCountry) ? "Try adjusting your search criteria" : "No posts available yet"
             }
           </p>
-          {(fromCountry || toCountry) && (
+          {(fromCountry || toCountry) && activeTab !== "services" && (
             <button
               onClick={handleShowAll}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+              className="mt-3 px-3 py-1.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
             >
               Show All
             </button>
@@ -974,7 +1060,7 @@ export default function DashboardPage() {
     
     // RESTORED: Your original ad placement logic - insert ads after every 9 posts
     currentPosts.forEach((item, index) => {
-      if (isEmployer) {
+      if (activeTab === "talent" || (activeTab === "jobs" && isEmployer)) {
         const availability = item as Availability;
         elements.push(
           <AvailabilityCard
@@ -985,7 +1071,7 @@ export default function DashboardPage() {
             onDelete={() => handleDeleteAvailability(availability.id)}
             onHire={() => handleHireClick(availability)}
             onViewProfile={() => handleViewProfile(availability.created_by)}
-            showHireButton={availability.created_by !== profile?.id}
+            showHireButton={availability.created_by !== profile?.id && isEmployer}
           />
         );
       } else {
@@ -1022,9 +1108,9 @@ export default function DashboardPage() {
           : "bg-gray-50 text-gray-900"
       }`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Loading Dashboard...</h2>
-          <p className="text-gray-400">Getting everything ready for you</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-3"></div>
+          <h2 className="text-base font-semibold mb-2">Loading Dashboard...</h2>
+          <p className="text-sm text-gray-400">Getting everything ready for you</p>
         </div>
       </div>
     );
@@ -1039,15 +1125,15 @@ export default function DashboardPage() {
       }`}
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-6 gap-4 sm:gap-6">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4 gap-4 sm:gap-6">
         <div className="flex flex-col flex-1">
-          <h1 className="flex items-center gap-3 text-2xl font-semibold">
-            <span className="text-2xl">💪🏿</span>
+          <h1 className="flex items-center gap-2 text-xl font-semibold">
+            <span className="text-xl">💪🏿</span>
             <span className="leading-none">NguvuHire</span>
           </h1>
           {/* Role indicator */}
-          <p className={`text-sm mt-1 ${textMuted}`}>
-            {isEmployer ? "👔 Employer Dashboard - Find Talent" : "💼 Job Seeker Dashboard - Find Jobs"}
+          <p className={`text-xs mt-1 ${textMuted}`}>
+            {isEmployer ? "👔 Employer Dashboard" : "💼 Job Seeker Dashboard"}
           </p>
           
           {/* Location indicator */}
@@ -1056,152 +1142,12 @@ export default function DashboardPage() {
               📍 Your location: {profile.country}
             </p>
           )}
-          
-          {/* SEARCH BARS ROW - MOBILE OPTIMIZED */}
-          <div className="mt-4 space-y-3">
-            {/* QUICK ACTION BUTTONS - UPDATED WITH REMOTE BUTTON */}
-            <div className="flex gap-2">
-              <button
-                onClick={handleShowRemote}
-                className={`px-3 py-2 rounded-md text-xs font-medium transition ${
-                  darkMode 
-                    ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
-                    : "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
-                }`}
-              >
-                Remote Jobs
-              </button>
-              <button
-                onClick={handleShowLocal}
-                className={`px-3 py-2 rounded-md text-xs font-medium transition ${
-                  darkMode 
-                    ? "bg-green-500 text-white hover:bg-green-600 border border-green-400"
-                    : "bg-green-500 text-white hover:bg-green-600 border border-green-400"
-                }`}
-              >
-                Show Local
-              </button>
-              <button
-                onClick={handleShowAll}
-                className={`px-3 py-2 rounded-md text-xs font-medium transition ${
-                  darkMode 
-                    ? "bg-gray-500 text-white hover:bg-gray-600 border border-gray-400"
-                    : "bg-gray-300 text-gray-700 hover:bg-gray-400 border border-gray-300"
-                }`}
-              >
-                Show All
-              </button>
-            </div>
-
-            {/* MAIN SEARCH BAR - Full width on mobile */}
-            <div className={`rounded-lg p-2 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder={isEmployer ? "Search skills, jobs, names..." : "Search jobs..."}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`flex-1 px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-1 ${
-                    darkMode
-                      ? "bg-purple-600/30 text-white placeholder-purple-200 focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
-                      : "bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-blue-400 focus:bg-white border border-gray-200"
-                  }`}
-                />
-                <button
-                  onClick={handleSearch}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition ${
-                    darkMode 
-                      ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
-                      : "bg-blue-500 text-white hover:bg-blue-600 border border-blue-400"
-                  }`}
-                >
-                  Search
-                </button>
-              </div>
-            </div>
-            
-            {/* REGION SEARCH - WITH EXTERNAL LABELS */}
-            <div className={`rounded-lg p-4 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Country selects with external labels */}
-                <div className="flex flex-col xs:flex-row gap-4 flex-1">
-                  {/* First dropdown with external label */}
-                  <div className="flex-1">
-                    <label className={`block text-sm font-semibold mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
-                      {isEmployer ? "📍 I want to hire from" : "📍 I am from"}
-                    </label>
-                    <select
-                      value={fromCountry}
-                      onChange={(e) => setFromCountry(e.target.value)}
-                      className={`w-full px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-1 ${
-                        darkMode
-                          ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
-                          : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
-                      }`}
-                    >
-                      <option value="">Select country</option>
-                      {countries.map(country => (
-                        <option key={`from-${country.code}`} value={country.code}>
-                          {country.flag} {country.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  {/* Second dropdown with external label */}
-                  <div className="flex-1">
-                    <label className={`block text-sm font-semibold mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
-                      {isEmployer ? "🏢 Job is located in" : "💼 I want to work in"}
-                    </label>
-                    <select
-                      value={toCountry}
-                      onChange={(e) => setToCountry(e.target.value)}
-                      className={`w-full px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-1 ${
-                        darkMode
-                          ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
-                          : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
-                      }`}
-                    >
-                      <option value="">Select country</option>
-                      {countries.map(country => (
-                        <option key={`to-${country.code}`} value={country.code}>
-                          {country.flag} {country.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                
-                {/* Filter button */}
-                <div className="flex items-end">
-                  <button
-                    onClick={handleRegionSearch}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition sm:w-auto w-full ${
-                      darkMode 
-                        ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
-                        : "bg-blue-500 text-white hover:bg-blue-600 border border-blue-400"
-                    }`}
-                  >
-                    Find Opportunities
-                  </button>
-                </div>
-              </div>
-              
-              {/* Help text */}
-              <p className={`text-xs mt-3 ${textMuted}`}>
-                {isEmployer 
-                  ? "Find candidates from specific countries for jobs in specific locations"
-                  : "Find jobs that want to hire people from your country or jobs in specific locations"
-                }
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Profile + Action buttons - MOBILE OPTIMIZED */}
         <div className="flex flex-col items-end gap-3">
-          <div className="flex items-center gap-3">
-            <div className={`text-sm ${textPrimary} hidden sm:block`}>
+          <div className="flex items-center gap-2">
+            <div className={`text-xs ${textPrimary} hidden sm:block`}>
               Welcome, <span className="font-medium">{getDisplayName()}</span>
             </div>
 
@@ -1211,21 +1157,21 @@ export default function DashboardPage() {
               <OptimizedImage
                 src={profileImageSrc(profile) ?? ""}
                 alt="Profile"
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover cursor-pointer border-2 border-purple-500"
+                className="w-8 h-8 rounded-full object-cover cursor-pointer border-2 border-purple-500"
                 onClick={() => router.push("/profile")}
               />
             ) : (
               <div
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-400 flex items-center justify-center text-white cursor-pointer"
+                className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white cursor-pointer"
                 onClick={() => router.push("/profile")}
               >
-                <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                <User className="w-4 h-4" />
               </div>
             )}
 
             <button
               onClick={toggleDarkMode}
-              className={`p-1.5 sm:p-2 rounded-lg transition ${
+              className={`p-1.5 rounded-lg transition ${
                 darkMode ? "bg-yellow-400" : "bg-gray-200"
               }`}
               aria-label="Toggle theme"
@@ -1240,19 +1186,19 @@ export default function DashboardPage() {
               <>
                 <button
                   onClick={handleViewApplications}
-                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition w-full sm:w-auto ${
+                  className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
                     darkMode
                       ? "bg-green-500 text-white hover:bg-green-600"
                       : "bg-green-500 text-white hover:bg-green-600"
                   }`}
                 >
-                  <Briefcase className="w-4 h-4" />
-                  <span className="sm:block hidden">View Applications</span>
-                  <span className="sm:hidden">Applications</span>
+                  <Briefcase className="w-3 h-3" />
+                  <span className="sm:block hidden">Applications</span>
+                  <span className="sm:hidden">Apps</span>
                 </button>
                 <button
                   onClick={handlePost}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition w-full sm:w-auto ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
                     darkMode
                       ? "bg-purple-500 text-white hover:bg-purple-600"
                       : "bg-blue-500 text-white hover:bg-blue-600"
@@ -1263,13 +1209,13 @@ export default function DashboardPage() {
                 {/* ADDED BOOST BUTTON FOR EMPLOYERS */}
                 <button
                   onClick={handleViewPricing}
-                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition w-full sm:w-auto ${
+                  className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
                     darkMode
                       ? "bg-yellow-500 text-black hover:bg-yellow-600"
                       : "bg-yellow-400 text-black hover:bg-yellow-500"
                   }`}
                 >
-                  <Crown className="w-4 h-4" />
+                  <Crown className="w-3 h-3" />
                   <span>Boost</span>
                 </button>
               </>
@@ -1277,18 +1223,18 @@ export default function DashboardPage() {
               <>
                 <button
                   onClick={handleViewHireRequests}
-                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition w-full sm:w-auto ${
+                  className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
                     darkMode
                       ? "bg-orange-500 text-white hover:bg-orange-600"
                       : "bg-orange-500 text-white hover:bg-orange-600"
                   }`}
                 >
-                  <span className="sm:block hidden">View Hire Requests</span>
-                  <span className="sm:hidden">Hire Requests</span>
+                  <span className="sm:block hidden">Hire Requests</span>
+                  <span className="sm:hidden">Requests</span>
                 </button>
                 <button
                   onClick={handlePost}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition w-full sm:w-auto ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
                     darkMode
                       ? "bg-purple-500 text-white hover:bg-purple-600"
                       : "bg-blue-500 text-white hover:bg-blue-600"
@@ -1299,13 +1245,13 @@ export default function DashboardPage() {
                 {/* ADDED BOOST BUTTON FOR JOB SEEKERS */}
                 <button
                   onClick={handleViewPricing}
-                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition w-full sm:w-auto ${
+                  className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
                     darkMode
                       ? "bg-yellow-500 text-black hover:bg-yellow-600"
                       : "bg-yellow-400 text-black hover:bg-yellow-500"
                   }`}
                 >
-                  <Crown className="w-4 h-4" />
+                  <Crown className="w-3 h-3" />
                   <span>Boost</span>
                 </button>
               </>
@@ -1314,21 +1260,245 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* ADDED: Unified Navigation Tabs */}
+      <div className={`flex gap-1 p-1 rounded-lg mb-4 ${
+        darkMode ? "bg-purple-500/20" : "bg-gray-200"
+      }`}>
+        <button
+          onClick={() => setActiveTab("jobs")}
+          className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition ${
+            activeTab === "jobs"
+              ? darkMode
+                ? "bg-purple-500 text-white shadow"
+                : "bg-white text-gray-900 shadow"
+              : darkMode
+                ? "text-purple-200 hover:text-white"
+                : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          💼 Jobs {activeTab === "jobs" && !isEmployer && `(${jobs.length})`}
+        </button>
+        <button
+          onClick={() => setActiveTab("talent")}
+          className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition ${
+            activeTab === "talent"
+              ? darkMode
+                ? "bg-purple-500 text-white shadow"
+                : "bg-white text-gray-900 shadow"
+              : darkMode
+                ? "text-purple-200 hover:text-white"
+                : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          👥 Talent {activeTab === "talent" && isEmployer && `(${availabilities.length})`}
+        </button>
+        <button
+          onClick={() => setActiveTab("services")}
+          className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition ${
+            activeTab === "services"
+              ? darkMode
+                ? "bg-purple-500 text-white shadow"
+                : "bg-white text-gray-900 shadow"
+              : darkMode
+                ? "text-purple-200 hover:text-white"
+                : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          🛠️ Services
+        </button>
+      </div>
+
+      {/* SEARCH BARS ROW - MOBILE OPTIMIZED - Only show for jobs and talent tabs */}
+      {(activeTab === "jobs" || activeTab === "talent") && (
+        <div className="space-y-3 mb-4">
+          {/* QUICK ACTION BUTTONS - UPDATED WITH REMOTE BUTTON */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleShowRemote}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                darkMode 
+                  ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
+                  : "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
+              }`}
+            >
+              Remote
+            </button>
+            <button
+              onClick={handleShowLocal}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                darkMode 
+                  ? "bg-green-500 text-white hover:bg-green-600 border border-green-400"
+                  : "bg-green-500 text-white hover:bg-green-600 border border-green-400"
+              }`}
+            >
+              Local
+            </button>
+            <button
+              onClick={handleShowAll}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                darkMode 
+                  ? "bg-gray-500 text-white hover:bg-gray-600 border border-gray-400"
+                  : "bg-gray-300 text-gray-700 hover:bg-gray-400 border border-gray-300"
+              }`}
+            >
+              Show All
+            </button>
+          </div>
+
+          {/* MAIN SEARCH BAR - Full width on mobile */}
+          <div className={`rounded-lg p-2 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder={
+                  activeTab === "jobs" 
+                    ? "Search jobs..." 
+                    : "Search skills, roles, names..."
+                }
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`flex-1 px-3 py-2 rounded-md text-xs focus:outline-none focus:ring-1 ${
+                  darkMode
+                    ? "bg-purple-600/30 text-white placeholder-purple-200 focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
+                    : "bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-blue-400 focus:bg-white border border-gray-200"
+                }`}
+              />
+              <button
+                onClick={handleSearch}
+                className={`px-3 py-2 rounded-md text-xs font-medium transition ${
+                  darkMode 
+                    ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
+                    : "bg-blue-500 text-white hover:bg-blue-600 border border-blue-400"
+                }`}
+              >
+                Search
+              </button>
+            </div>
+          </div>
+          
+          {/* REGION SEARCH - WITH EXTERNAL LABELS */}
+          <div className={`rounded-lg p-3 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Country selects with external labels */}
+              <div className="flex flex-col xs:flex-row gap-3 flex-1">
+                {/* First dropdown with external label */}
+                <div className="flex-1">
+                  <label className={`block text-xs font-semibold mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                    {isEmployer ? "📍 Hire from" : "📍 I am from"}
+                  </label>
+                  <select
+                    value={fromCountry}
+                    onChange={(e) => setFromCountry(e.target.value)}
+                    className={`w-full px-2 py-1.5 rounded-md text-xs focus:outline-none focus:ring-1 ${
+                      darkMode
+                        ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
+                        : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
+                    }`}
+                  >
+                    <option value="">Select country</option>
+                    {countries.map(country => (
+                      <option key={`from-${country.code}`} value={country.code}>
+                        {country.flag} {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Second dropdown with external label */}
+                <div className="flex-1">
+                  <label className={`block text-xs font-semibold mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                    {isEmployer ? "🏢 Job location" : "💼 Work in"}
+                  </label>
+                  <select
+                    value={toCountry}
+                    onChange={(e) => setToCountry(e.target.value)}
+                    className={`w-full px-2 py-1.5 rounded-md text-xs focus:outline-none focus:ring-1 ${
+                      darkMode
+                        ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
+                        : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
+                    }`}
+                  >
+                    <option value="">Select country</option>
+                    {countries.map(country => (
+                      <option key={`to-${country.code}`} value={country.code}>
+                        {country.flag} {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              {/* Filter button */}
+              <div className="flex items-end">
+                <button
+                  onClick={handleRegionSearch}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition sm:w-auto w-full ${
+                    darkMode 
+                      ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
+                      : "bg-blue-500 text-white hover:bg-blue-600 border border-blue-400"
+                  }`}
+                >
+                  Find
+                </button>
+              </div>
+            </div>
+            
+            {/* Help text */}
+            <p className={`text-xs mt-2 ${textMuted}`}>
+              {isEmployer 
+                ? "Find candidates from specific countries for jobs in specific locations"
+                : "Find jobs that want to hire people from your country or jobs in specific locations"
+              }
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Services Tab Content */}
+      {activeTab === "services" && (
+        <div className={`rounded-lg p-4 mb-4 ${darkMode ? "bg-purple-500/20 border border-purple-400/30" : "bg-white border border-gray-200"}`}>
+          <div className="text-center py-6">
+            <div className="text-4xl mb-3">🛠️</div>
+            <h3 className="text-base font-bold mb-2">Services Coming Soon</h3>
+            <p className="text-xs text-gray-600 max-w-md mx-auto mb-4">
+              We're working on bringing you professional services to enhance your hiring and job search experience.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
+              <div className={`p-3 rounded-lg ${darkMode ? "bg-purple-500/20" : "bg-blue-50"}`}>
+                <div className="text-lg mb-1">📊</div>
+                <h4 className="font-semibold text-xs mb-1">Analytics</h4>
+                <p className="text-xs">Detailed insights and reporting</p>
+              </div>
+              <div className={`p-3 rounded-lg ${darkMode ? "bg-purple-500/20" : "bg-blue-50"}`}>
+                <div className="text-lg mb-1">🎯</div>
+                <h4 className="font-semibold text-xs mb-1">Matching</h4>
+                <p className="text-xs">Advanced candidate matching</p>
+              </div>
+              <div className={`p-3 rounded-lg ${darkMode ? "bg-purple-500/20" : "bg-blue-50"}`}>
+                <div className="text-lg mb-1">⚡</div>
+                <h4 className="font-semibold text-xs mb-1">Tools</h4>
+                <p className="text-xs">Productivity enhancements</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Posts Grid - Clean and simple, only shows posts */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {renderPostsWithAds()}
       </div>
 
       {/* Pagination Component */}
-      {totalPages > 1 && (
-        <div className="mt-8">
+      {totalPages > 1 && activeTab !== "services" && (
+        <div className="mt-6">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
           />
-          <div className="text-center text-gray-600 dark:text-gray-300 mt-4 text-sm">
-            Showing {indexOfFirstPost + 1}-{Math.min(indexOfLastPost, displayItems.length)} of {displayItems.length} {isEmployer ? "job seekers" : "jobs"}
+          <div className="text-center text-xs text-gray-600 dark:text-gray-300 mt-3">
+            Showing {indexOfFirstPost + 1}-{Math.min(indexOfLastPost, displayItems.length)} of {displayItems.length} {activeTab === "jobs" ? "jobs" : "job seekers"}
           </div>
         </div>
       )}
@@ -1336,14 +1506,14 @@ export default function DashboardPage() {
       {/* Logout Button - Mobile Optimized */}
       <button
         onClick={handleLogout}
-        className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 px-3 py-2 sm:px-4 sm:py-2 rounded-full font-medium shadow-xl transition ${
+        className={`fixed bottom-4 right-4 px-3 py-2 rounded-full text-xs font-medium shadow-xl transition flex items-center gap-1 ${
           darkMode
             ? "bg-purple-500 text-white hover:bg-purple-600"
             : "bg-gray-200 text-gray-900 hover:bg-gray-300"
         }`}
       >
-        <LogOut className="inline w-4 h-4 mr-1 sm:mr-2" />
-        <span className="sm:inline hidden">Logout</span>
+        <LogOut className="w-3 h-3" />
+        Logout
       </button>
 
       {/* Modals */}
