@@ -220,7 +220,7 @@ function PostJobContent() {
     }
   };
 
-  const inputClasses = `w-full px-4 py-3 rounded-xl border focus:ring-2 focus:border-transparent transition-all duration-200 ${
+  const inputClasses = `w-full px-4 py-3 rounded-xl border focus:ring-2 focus:border-transparent transition-all duration-200 text-sm ${
     darkMode 
       ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:ring-green-500" 
       : "bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-green-500"
@@ -238,10 +238,10 @@ function PostJobContent() {
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gradient-to-br from-blue-900 via-purple-900 to-black" : "bg-gray-50"}`}>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className={`text-4xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
+          <h1 className={`text-xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
             {isEditing ? "Edit Job Post" : "Post a Job Opportunity"}
           </h1>
-          <p className={`text-lg ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+          <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
             {isEditing ? "Update your job posting" : "Find the perfect candidate for your open position"}
           </p>
         </div>
@@ -342,7 +342,7 @@ function PostJobContent() {
                 <button
                   type="button"
                   onClick={() => handleWorkLocationChange("onsite")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-sm ${
                     workLocationType === "onsite"
                       ? "border-green-500 bg-green-500/10 text-green-600"
                       : darkMode
@@ -358,7 +358,7 @@ function PostJobContent() {
                 <button
                   type="button"
                   onClick={() => handleWorkLocationChange("remote")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-sm ${
                     workLocationType === "remote"
                       ? "border-green-500 bg-green-500/10 text-green-600"
                       : darkMode
@@ -374,7 +374,7 @@ function PostJobContent() {
                 <button
                   type="button"
                   onClick={() => handleWorkLocationChange("hybrid")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-sm ${
                     workLocationType === "hybrid"
                       ? "border-green-500 bg-green-500/10 text-green-600"
                       : darkMode
@@ -397,7 +397,7 @@ function PostJobContent() {
                   <button
                     type="button"
                     onClick={() => setRemoteHiringScope("worldwide")}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 text-sm ${
                       remoteHiringScope === "worldwide"
                         ? "border-blue-500 bg-blue-500/10 text-blue-600"
                         : darkMode
@@ -413,7 +413,7 @@ function PostJobContent() {
                   <button
                     type="button"
                     onClick={() => setRemoteHiringScope("specific")}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 text-sm ${
                       remoteHiringScope === "specific"
                         ? "border-blue-500 bg-blue-500/10 text-blue-600"
                         : darkMode
@@ -443,14 +443,14 @@ function PostJobContent() {
                             onChange={() => handleRemoteCountryToggle(country.code)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className={`text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                          <span className={`text-xs ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                             {country.flag} {country.name}
                           </span>
                         </label>
                       ))}
                     </div>
                     {remoteHiringCountries.length > 0 && (
-                      <p className={`text-sm mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>
+                      <p className={`text-xs mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>
                         Will hire remote workers from: {remoteHiringCountries.map(code => {
                           const country = countries.find(c => c.code === code);
                           return country ? `${country.flag} ${country.name}` : '';
@@ -491,7 +491,7 @@ function PostJobContent() {
             <div>
               <label className={labelClasses}>
                 Where are you hiring from? *
-                <span className="text-sm font-normal ml-2 text-gray-500">
+                <span className="text-xs font-normal ml-2 text-gray-500">
                   (Select countries where you want to find candidates)
                 </span>
               </label>
@@ -506,14 +506,14 @@ function PostJobContent() {
                       onChange={() => handleCountryToggle(country.code)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className={`text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                    <span className={`text-xs ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                       {country.flag} {country.name}
                     </span>
                   </label>
                 ))}
               </div>
               {preferredCandidateCountries.length > 0 && (
-                <p className={`text-sm mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>
+                <p className={`text-xs mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>
                   Hiring from: {preferredCandidateCountries.map(code => {
                     const country = countries.find(c => c.code === code);
                     return country ? `${country.flag} ${country.name}` : '';
@@ -583,7 +583,7 @@ function PostJobContent() {
                 type="file"
                 accept="image/*"
                 onChange={(e) => e.target.files && handleUploadCover(e.target.files[0])}
-                className={`w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold ${
+                className={`w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold ${
                   darkMode 
                     ? "text-gray-300 file:bg-green-900 file:text-green-200 hover:file:bg-green-800" 
                     : "text-gray-500 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
@@ -595,7 +595,7 @@ function PostJobContent() {
                   <p className={`text-xs mt-2 text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Cover photo preview - This will make your job post stand out</p>
                 </div>
               )}
-              {uploading && <p className={`text-sm mt-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Uploading cover photo...</p>}
+              {uploading && <p className={`text-xs mt-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Uploading cover photo...</p>}
             </div>
 
             {/* Submit Button */}
@@ -603,7 +603,7 @@ function PostJobContent() {
               <button
                 type="submit"
                 disabled={submitting || uploading}
-                className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:transform-none disabled:hover:shadow-lg"
+                className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-4 px-6 rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:transform-none disabled:hover:shadow-lg"
               >
                 {submitting ? (
                   <span className="flex items-center justify-center">
@@ -632,7 +632,7 @@ export default function PostJobPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-sm text-gray-600">Loading...</p>
         </div>
       </div>
     }>

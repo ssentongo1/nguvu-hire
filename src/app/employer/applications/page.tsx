@@ -239,11 +239,11 @@ export default function EmployerApplicationsPage() {
     return (
       <div className={`min-h-screen p-6 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Applications</h1>
+          <h1 className="text-xl font-bold mb-6">Applications</h1>
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-4">Loading applications...</p>
+              <p className="mt-4 text-sm">Loading applications...</p>
             </div>
           </div>
         </div>
@@ -256,15 +256,15 @@ export default function EmployerApplicationsPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Job Applications</h1>
-            <p className="text-sm opacity-75 mt-1">
+            <h1 className="text-xl font-bold">Job Applications</h1>
+            <p className="text-xs opacity-75 mt-1">
               Review and manage applications for your job postings
             </p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={fetchApplications}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg text-sm ${
                 darkMode 
                   ? "bg-gray-700 hover:bg-gray-600" 
                   : "bg-gray-200 hover:bg-gray-300"
@@ -274,7 +274,7 @@ export default function EmployerApplicationsPage() {
             </button>
             <button
               onClick={() => router.push("/dashboard")}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg text-sm ${
                 darkMode 
                   ? "bg-purple-600 hover:bg-purple-700" 
                   : "bg-blue-500 hover:bg-blue-600"
@@ -288,13 +288,13 @@ export default function EmployerApplicationsPage() {
         {applications.length === 0 ? (
           <div className={`text-center py-12 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
             <div className="text-6xl mb-4">📭</div>
-            <h3 className="text-xl font-semibold mb-2">No applications yet</h3>
-            <p className="opacity-75 mb-4 max-w-md mx-auto">
+            <h3 className="text-lg font-semibold mb-2">No applications yet</h3>
+            <p className="opacity-75 mb-4 max-w-md mx-auto text-sm">
               Applications will appear here when job seekers apply to your jobs.
             </p>
             <button
               onClick={() => router.push("/post-job")}
-              className={`px-6 py-2 rounded-lg ${
+              className={`px-6 py-2 rounded-lg text-sm ${
                 darkMode 
                   ? "bg-green-600 hover:bg-green-700" 
                   : "bg-green-500 hover:bg-green-600"
@@ -306,7 +306,7 @@ export default function EmployerApplicationsPage() {
         ) : (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <p className="text-sm opacity-75">
+              <p className="text-xs opacity-75">
                 Showing {applications.length} application{applications.length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -327,15 +327,15 @@ export default function EmployerApplicationsPage() {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">
+                      <h3 className="font-semibold text-sm">
                         {application.applicant?.first_name} {application.applicant?.last_name}
                       </h3>
-                      <p className="opacity-75">{application.job?.title}</p>
-                      <p className="text-sm opacity-60">{application.email} • {application.phone}</p>
+                      <p className="opacity-75 text-sm">{application.job?.title}</p>
+                      <p className="text-xs opacity-60">{application.email} • {application.phone}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
                       {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                     </span>
                   </div>
@@ -347,19 +347,19 @@ export default function EmployerApplicationsPage() {
                       ? 'bg-blue-900/20 border-blue-800 text-blue-200' 
                       : 'bg-blue-50 border-blue-200 text-blue-900'
                   }`}>
-                    <p className={`text-sm font-semibold mb-2 flex items-center gap-2 ${
+                    <p className={`text-xs font-semibold mb-2 flex items-center gap-2 ${
                       darkMode ? 'text-blue-300' : 'text-blue-800'
                     }`}>
                       <span>💬</span>
                       Additional Notes from Applicant
                     </p>
-                    <p className="leading-relaxed">
+                    <p className="leading-relaxed text-sm">
                       {application.additional_notes}
                     </p>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-xs">
                   <div>
                     <p className="font-medium opacity-75">Applied On</p>
                     <p>{new Date(application.applied_at).toLocaleDateString('en-US', {
@@ -382,7 +382,7 @@ export default function EmployerApplicationsPage() {
                       href={application.resume_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${
+                      className={`px-4 py-2 rounded-lg flex items-center gap-2 transition text-xs ${
                         darkMode 
                           ? "bg-blue-600 hover:bg-blue-700" 
                           : "bg-blue-500 hover:bg-blue-600"
@@ -394,7 +394,7 @@ export default function EmployerApplicationsPage() {
                       href={application.cover_letter_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${
+                      className={`px-4 py-2 rounded-lg flex items-center gap-2 transition text-xs ${
                         darkMode 
                           ? "bg-green-600 hover:bg-green-700" 
                           : "bg-green-500 hover:bg-green-600"
@@ -406,11 +406,11 @@ export default function EmployerApplicationsPage() {
 
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium opacity-75">Status:</span>
+                      <span className="text-xs font-medium opacity-75">Status:</span>
                       <select
                         value={application.status}
                         onChange={(e) => updateApplicationStatus(application.id, e.target.value)}
-                        className={`px-3 py-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`px-3 py-2 rounded-lg text-xs border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           darkMode 
                             ? 'bg-gray-700 text-white border-gray-600' 
                             : 'bg-white text-gray-900 border-gray-300'
@@ -426,7 +426,7 @@ export default function EmployerApplicationsPage() {
                     <button
                       onClick={() => deleteApplication(application.id)}
                       disabled={deletingId === application.id}
-                      className={`px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
+                      className={`px-3 py-2 rounded-lg text-xs transition flex items-center gap-2 ${
                         deletingId === application.id
                           ? 'bg-gray-400 cursor-not-allowed'
                           : darkMode 

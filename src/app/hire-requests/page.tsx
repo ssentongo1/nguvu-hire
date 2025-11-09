@@ -235,11 +235,11 @@ export default function HireRequestsPage() {
     return (
       <div className={`min-h-screen p-6 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Hire Requests</h1>
+          <h1 className="text-xl font-bold mb-6">Hire Requests</h1>
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-4">Loading hire requests...</p>
+              <p className="mt-4 text-sm">Loading hire requests...</p>
             </div>
           </div>
         </div>
@@ -252,15 +252,15 @@ export default function HireRequestsPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Hire Requests</h1>
-            <p className="text-sm opacity-75 mt-1">
+            <h1 className="text-xl font-bold">Hire Requests</h1>
+            <p className="text-xs opacity-75 mt-1">
               Manage incoming job offers from employers
             </p>
           </div>
           <div className="flex flex-col xs:flex-row gap-2 w-full sm:w-auto">
             <button
               onClick={fetchHireRequests}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg text-sm ${
                 darkMode 
                   ? "bg-gray-700 hover:bg-gray-600" 
                   : "bg-gray-200 hover:bg-gray-300"
@@ -270,7 +270,7 @@ export default function HireRequestsPage() {
             </button>
             <button
               onClick={() => router.push("/dashboard")}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg text-sm ${
                 darkMode 
                   ? "bg-purple-600 hover:bg-purple-700" 
                   : "bg-blue-500 hover:bg-blue-600"
@@ -284,13 +284,13 @@ export default function HireRequestsPage() {
         {hireRequests.length === 0 ? (
           <div className={`text-center py-12 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
             <div className="text-6xl mb-4">💼</div>
-            <h3 className="text-xl font-semibold mb-2">No hire requests yet</h3>
-            <p className="opacity-75 mb-4 max-w-md mx-auto">
+            <h3 className="text-lg font-semibold mb-2">No hire requests yet</h3>
+            <p className="opacity-75 mb-4 max-w-md mx-auto text-sm">
               When employers want to hire you, their requests will appear here.
             </p>
             <button
               onClick={() => router.push("/post-availability")}
-              className={`px-6 py-2 rounded-lg ${
+              className={`px-6 py-2 rounded-lg text-sm ${
                 darkMode 
                   ? "bg-green-600 hover:bg-green-700" 
                   : "bg-green-500 hover:bg-green-600"
@@ -302,7 +302,7 @@ export default function HireRequestsPage() {
         ) : (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <p className="text-sm opacity-75">
+              <p className="text-xs opacity-75">
                 Showing {hireRequests.length} hire request{hireRequests.length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -323,21 +323,21 @@ export default function HireRequestsPage() {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">
+                      <h3 className="font-semibold text-sm">
                         {hire.employer?.company_name || `${hire.employer?.first_name} ${hire.employer?.last_name}`}
                       </h3>
-                      <p className="opacity-75 flex items-center gap-1">
+                      <p className="opacity-75 flex items-center gap-1 text-sm">
                         <Briefcase className="w-4 h-4" />
                         {hire.desired_position}
                       </p>
-                      <p className="text-sm opacity-60 flex items-center gap-1">
+                      <p className="text-xs opacity-60 flex items-center gap-1">
                         <Building className="w-4 h-4" />
                         {hire.employer?.employer_type || 'Employer'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(hire.status)}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(hire.status)}`}>
                       <span className="mr-1">{getStatusIcon(hire.status)}</span>
                       {hire.status.charAt(0).toUpperCase() + hire.status.slice(1)}
                     </span>
@@ -351,19 +351,19 @@ export default function HireRequestsPage() {
                       ? 'bg-blue-900/20 border-blue-800 text-blue-200' 
                       : 'bg-blue-50 border-blue-200 text-blue-900'
                   }`}>
-                    <p className={`text-sm font-semibold mb-2 flex items-center gap-2 ${
+                    <p className={`text-xs font-semibold mb-2 flex items-center gap-2 ${
                       darkMode ? 'text-blue-300' : 'text-blue-800'
                     }`}>
                       <MessageCircle className="w-4 h-4" />
                       Message from Employer
                     </p>
-                    <div className="whitespace-pre-wrap leading-relaxed">
+                    <div className="whitespace-pre-wrap leading-relaxed text-sm">
                       {hire.employer_message}
                     </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-xs">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 opacity-60" />
                     <div>
@@ -385,7 +385,7 @@ export default function HireRequestsPage() {
                   <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t dark:border-gray-700">
                     <button
                       onClick={() => updateHireStatus(hire.id, 'accepted')}
-                      className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm sm:text-base ${
+                      className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-xs sm:text-sm ${
                         darkMode 
                           ? "bg-green-600 hover:bg-green-700" 
                           : "bg-green-500 hover:bg-green-600"
@@ -399,7 +399,7 @@ export default function HireRequestsPage() {
                     <button
                       onClick={() => updateHireStatus(hire.id, 'rejected')}
                       disabled={updatingId === hire.id}
-                      className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm sm:text-base ${
+                      className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-xs sm:text-sm ${
                         darkMode 
                           ? "bg-red-600 hover:bg-red-700" 
                           : "bg-red-500 hover:bg-red-600"
@@ -417,7 +417,7 @@ export default function HireRequestsPage() {
                     <button
                       onClick={() => deleteHireRequest(hire.id)}
                       disabled={deletingId === hire.id}
-                      className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+                      className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 text-xs ${
                         deletingId === hire.id
                           ? 'bg-gray-400 cursor-not-allowed'
                           : darkMode 
