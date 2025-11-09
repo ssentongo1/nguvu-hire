@@ -97,11 +97,11 @@ export default function ProfileViewPage() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
             <span className="text-2xl">👤</span>
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">No Profile Found</h3>
-          <p className="text-gray-600 mb-6">Create your profile to get started</p>
+          <h3 className="text-sm font-semibold text-gray-800 mb-2">No Profile Found</h3>
+          <p className="text-xs text-gray-600 mb-6">Create your profile to get started</p>
           <button 
             onClick={() => router.push("/profile")} 
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-sm hover:bg-blue-700 transition-colors"
           >
             Create Profile
           </button>
@@ -129,8 +129,8 @@ export default function ProfileViewPage() {
           </div>
           
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-gray-800 truncate">{fullName}</h1>
-            <p className="text-gray-600 text-sm capitalize mb-1">
+            <h1 className="text-lg font-bold text-gray-800 truncate">{fullName}</h1>
+            <p className="text-xs text-gray-600 capitalize mb-1">
               {profile.role?.replace('_', ' ') || 'User'}
             </p>
             <div className="flex flex-wrap gap-2 text-xs text-gray-500">
@@ -142,7 +142,7 @@ export default function ProfileViewPage() {
           <div className="flex-shrink-0 ml-4">
             <button 
               onClick={() => router.push("/profile")}
-              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
             >
               Edit
             </button>
@@ -155,8 +155,8 @@ export default function ProfileViewPage() {
             
             {/* Left Column - Bio */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">About</h3>
-              <p className="text-gray-700 text-sm leading-relaxed">
+              <h3 className="font-semibold text-gray-800 mb-3 text-xs uppercase tracking-wide">About</h3>
+              <p className="text-xs text-gray-700 leading-relaxed">
                 {profile.bio || "No bio provided yet."}
               </p>
             </div>
@@ -165,7 +165,7 @@ export default function ProfileViewPage() {
             <div className="space-y-4">
               {/* Skills */}
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">Skills</h3>
+                <h3 className="font-semibold text-gray-800 mb-3 text-xs uppercase tracking-wide">Skills</h3>
                 {profile.skills ? (
                   <div className="flex flex-wrap gap-1">
                     {profile.skills.split(',').map((skill, index) => (
@@ -178,14 +178,14 @@ export default function ProfileViewPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm">No skills added</p>
+                  <p className="text-xs text-gray-500">No skills added</p>
                 )}
               </div>
 
               {/* Contact Info */}
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">Contact</h3>
-                <div className="space-y-2 text-sm">
+                <h3 className="font-semibold text-gray-800 mb-3 text-xs uppercase tracking-wide">Contact</h3>
+                <div className="space-y-2 text-xs">
                   {userEmail && (
                     <div className="flex items-center">
                       <span className="text-gray-500 w-20">Email:</span>
@@ -209,7 +209,7 @@ export default function ProfileViewPage() {
           <div className="flex justify-between items-center">
             <button 
               onClick={() => router.push("/dashboard")}
-              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium"
             >
               Back to Dashboard
             </button>
