@@ -288,6 +288,16 @@ export default function DashboardPage() {
     return country?.code || "";
   };
 
+  // Set default tab based on user role when profile loads
+  useEffect(() => {
+    if (profile?.role === "employer") {
+      setActiveTab("talent"); // Employers see talent by default
+    } else if (profile?.role === "job_seeker") {
+      setActiveTab("jobs"); // Job seekers see jobs by default
+    }
+    // Guest users remain on "jobs" tab (default state)
+  }, [profile?.role]);
+
   // Calculate pagination values
   const isEmployer = profile?.role === "employer";
   
