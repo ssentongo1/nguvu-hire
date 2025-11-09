@@ -68,8 +68,8 @@ export default function AvailabilityCard({
         />
       )}
       <div className="p-4 flex-1 flex flex-col">
-        <h3 className="font-bold text-lg line-clamp-1">{availability.desired_job}</h3>
-        <p className="text-sm line-clamp-2">
+        <h3 className="font-bold text-sm line-clamp-1">{availability.desired_job}</h3>
+        <p className="text-xs line-clamp-2">
           {availability.name} • {availability.location}, {availability.country}
         </p>
         

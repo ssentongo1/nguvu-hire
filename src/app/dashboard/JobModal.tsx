@@ -106,8 +106,8 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
       
       return (
         <div key={index} className="flex items-start mb-2">
-          {isBullet && <span className="mr-3 text-lg">•</span>}
-          <span className={isBullet ? "flex-1" : ""}>{trimmedLine}</span>
+          {isBullet && <span className="mr-3 text-sm">•</span>}
+          <span className={`${isBullet ? "flex-1" : ""} text-sm`}>{trimmedLine}</span>
         </div>
       );
     });
@@ -121,17 +121,17 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
           <div className={`p-6 border-b ${borderColor}`}>
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h2 className={`text-2xl font-bold ${textPrimary}`}>
+                <h2 className={`text-xl font-bold ${textPrimary}`}>
                   {job.title}
                 </h2>
-                <p className={`${textSecondary} mt-2 text-lg`}>
+                <p className={`${textSecondary} mt-2 text-sm`}>
                   {job.company} • {job.location}, {jobCountry?.flag} {jobCountry?.name}
                 </p>
                 
                 {/* Job Type and Salary */}
                 <div className="flex flex-wrap gap-4 mt-3">
                   {job.job_type && (
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       darkMode ? 'bg-purple-500/40 text-purple-100' : 'bg-purple-100 text-purple-800'
                     }`}>
                       💼 {job.job_type}
@@ -139,14 +139,14 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
                   )}
                   
                   {job.salary && (
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       darkMode ? 'bg-green-500/40 text-green-100' : 'bg-green-100 text-green-800'
                     }`}>
                       💰 {job.salary}
                     </span>
                   )}
                   
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     darkMode ? 'bg-blue-500/40 text-blue-100' : 'bg-blue-100 text-blue-800'
                   }`}>
                     {getWorkLocationDisplay()}
@@ -180,7 +180,7 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
               {/* Preferred Candidate Countries */}
               {preferredCountries && preferredCountries.length > 0 && (
                 <div className={`p-4 rounded-lg border ${darkMode ? 'bg-purple-500/20 border-purple-400' : 'bg-purple-50 border-purple-200'}`}>
-                  <h4 className={`font-semibold mb-2 ${textPrimary}`}>🌍 Hiring From</h4>
+                  <h4 className={`font-semibold mb-2 text-sm ${textPrimary}`}>🌍 Hiring From</h4>
                   <div className="flex flex-wrap gap-1">
                     {preferredCountries.map((country, index) => (
                       <span 
@@ -199,8 +199,8 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
               {/* Remote Work Countries */}
               {getRemoteWorkCountries() && (
                 <div className={`p-4 rounded-lg border ${darkMode ? 'bg-blue-500/20 border-blue-400' : 'bg-blue-50 border-blue-200'}`}>
-                  <h4 className={`font-semibold mb-2 ${textPrimary}`}>📍 Remote Work Available In</h4>
-                  <p className={`text-sm ${textSecondary}`}>{getRemoteWorkCountries()}</p>
+                  <h4 className={`font-semibold mb-2 text-sm ${textPrimary}`}>📍 Remote Work Available In</h4>
+                  <p className={`text-xs ${textSecondary}`}>{getRemoteWorkCountries()}</p>
                 </div>
               )}
             </div>
@@ -228,7 +228,7 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
                       ? 'text-yellow-400'
                       : 'text-green-400'
                   }`}>⏰</span>
-                  <span className={`font-medium ${
+                  <span className={`font-medium text-sm ${
                     isDeadlinePassed(job.deadline)
                       ? darkMode ? 'text-red-300' : 'text-red-800'
                       : isDeadlineApproaching(job.deadline)
@@ -245,10 +245,10 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
 
             {/* Job Description */}
             <div>
-              <h3 className={`text-xl font-semibold ${textPrimary} mb-4`}>
+              <h3 className={`text-lg font-semibold ${textPrimary} mb-4`}>
                 📝 Job Description
               </h3>
-              <div className={`${textSecondary} whitespace-pre-line leading-relaxed`}>
+              <div className={`${textSecondary} whitespace-pre-line leading-relaxed text-sm`}>
                 {formatTextWithBullets(job.description) || job.description}
               </div>
             </div>
@@ -256,10 +256,10 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
             {/* Responsibilities */}
             {job.responsibilities && (
               <div>
-                <h3 className={`text-xl font-semibold ${textPrimary} mb-4`}>
+                <h3 className={`text-lg font-semibold ${textPrimary} mb-4`}>
                   🎯 Key Responsibilities
                 </h3>
-                <div className={`${textSecondary} leading-relaxed`}>
+                <div className={`${textSecondary} leading-relaxed text-sm`}>
                   {formatTextWithBullets(job.responsibilities)}
                 </div>
               </div>
@@ -268,10 +268,10 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
             {/* Requirements */}
             {job.requirements && (
               <div>
-                <h3 className={`text-xl font-semibold ${textPrimary} mb-4`}>
+                <h3 className={`text-lg font-semibold ${textPrimary} mb-4`}>
                   ✅ Requirements & Qualifications
                 </h3>
-                <div className={`${textSecondary} leading-relaxed`}>
+                <div className={`${textSecondary} leading-relaxed text-sm`}>
                   {formatTextWithBullets(job.requirements)}
                 </div>
               </div>
@@ -280,10 +280,10 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
             {/* Preferred Location */}
             {job.preferred_location && (
               <div>
-                <h3 className={`text-xl font-semibold ${textPrimary} mb-4`}>
+                <h3 className={`text-lg font-semibold ${textPrimary} mb-4`}>
                   📍 Preferred Location
                 </h3>
-                <p className={`${textSecondary}`}>
+                <p className={`${textSecondary} text-sm`}>
                   {job.preferred_location}
                 </p>
               </div>
@@ -293,13 +293,13 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
           {/* Footer with Apply Button */}
           <div className={`p-6 border-t ${borderColor} ${bgSecondary} rounded-b-xl`}>
             <div className="flex justify-between items-center">
-              <span className={`text-sm ${textMuted}`}>
+              <span className={`text-xs ${textMuted}`}>
                 Posted {new Date(job.created_at).toLocaleDateString()}
               </span>
               <button
                 onClick={() => setShowApplyForm(true)}
                 disabled={isApplyDisabled}
-                className={`px-8 py-3 rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 ${
+                className={`px-8 py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
                   isApplyDisabled
                     ? 'bg-gray-400 text-white cursor-not-allowed'
                     : darkMode

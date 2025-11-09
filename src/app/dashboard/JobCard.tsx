@@ -136,7 +136,7 @@ export default function JobCard({ job, onClick, canDelete, onDelete, onViewProfi
           </div>
         )}
         <div className="p-3 flex-1 flex flex-col">
-          <h3 className={`font-bold text-lg line-clamp-2 mb-1 ${textPrimary}`}>
+          <h3 className={`font-bold text-sm line-clamp-2 mb-1 ${textPrimary}`}>
             {job.title}
           </h3>
           

@@ -71,28 +71,28 @@ export default function AdModal({ ad, onClose }: Props) {
           ) : (
             <div className={`text-center ${textSecondary}`}>
               <div className="text-6xl mb-4">📢</div>
-              <p className="text-lg">Sponsored Content</p>
+              <p className="text-sm">Sponsored Content</p>
             </div>
           )}
         </div>
 
         <div className="p-6">
           {/* Ad Badge */}
-          <div className="inline-flex items-center px-3 py-1 bg-yellow-500 text-black text-sm font-semibold rounded-full mb-4">
+          <div className="inline-flex items-center px-3 py-1 bg-yellow-500 text-black text-xs font-semibold rounded-full mb-4">
             ADVERTISEMENT
           </div>
 
           {/* Title */}
-          <h2 className={`text-3xl font-bold mb-4 ${textPrimary}`}>
+          <h2 className={`text-xl font-bold mb-4 ${textPrimary}`}>
             {ad.title}
           </h2>
 
           {/* Description */}
           <div className="mb-6">
-            <h3 className={`font-semibold text-lg mb-3 ${textSecondary}`}>
+            <h3 className={`font-semibold text-sm mb-3 ${textSecondary}`}>
               About This Ad
             </h3>
-            <p className={`text-lg leading-relaxed ${textSecondary}`}>
+            <p className={`text-sm leading-relaxed ${textSecondary}`}>
               {ad.description}
             </p>
           </div>
@@ -101,7 +101,7 @@ export default function AdModal({ ad, onClose }: Props) {
           <div className={`p-4 rounded-lg mb-6 ${
             darkMode ? "bg-purple-500/30" : "bg-gray-100"
           }`}>
-            <p className={`text-sm ${textSecondary}`}>
+            <p className={`text-xs ${textSecondary}`}>
               <strong className={textPrimary}>Note:</strong> This is a sponsored advertisement. Clicking "Learn More" will take you to the advertiser's website.
             </p>
           </div>
@@ -110,9 +110,9 @@ export default function AdModal({ ad, onClose }: Props) {
           <div className="flex justify-end pt-4 border-t border-purple-500 dark:border-purple-500">
             <button
               onClick={handleLearnMore}
-              className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600 transition text-lg"
+              className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600 transition text-sm"
             >
-              <ExternalLink className="w-5 h-5" />
+              <ExternalLink className="w-4 h-4" />
               Learn More
             </button>
           </div>

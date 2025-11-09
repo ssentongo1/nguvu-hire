@@ -33,7 +33,7 @@ export default function AvailabilityModal({ availability, onClose, readOnly = fa
 
   // Function to format text with bullet points (same as JobModal)
   const renderTextWithBullets = (text: string) => {
-    if (!text) return <p className="text-gray-500 italic">No information provided</p>;
+    if (!text) return <p className="text-gray-500 italic text-sm">No information provided</p>;
     
     const lines = text.split('\n').filter(line => line.trim().length > 0);
     
@@ -47,14 +47,14 @@ export default function AvailabilityModal({ availability, onClose, readOnly = fa
             const content = trimmedLine.substring(1).trim();
             return (
               <div key={index} className="flex items-start">
-                <span className="mr-2 mt-0.5">•</span>
-                <span>{content}</span>
+                <span className="mr-2 mt-0.5 text-sm">•</span>
+                <span className="text-sm">{content}</span>
               </div>
             );
           }
           
           return (
-            <div key={index}>
+            <div key={index} className="text-sm">
               {trimmedLine}
             </div>
           );
@@ -166,13 +166,13 @@ export default function AvailabilityModal({ availability, onClose, readOnly = fa
 
         <div className="p-6">
           <div className="mb-6">
-            <h2 className={`text-3xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
+            <h2 className={`text-xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
               {availability.desired_job}
             </h2>
-            <p className={`text-xl mb-1 font-semibold ${darkMode ? "text-green-400" : "text-green-600"}`}>
+            <p className={`text-lg mb-1 font-semibold ${darkMode ? "text-green-400" : "text-green-600"}`}>
               {availability.name}
             </p>
-            <p className={`text-base mb-2 ${darkMode ? "text-gray-300" : "text-gray-500"}`}>
+            <p className={`text-sm mb-2 ${darkMode ? "text-gray-300" : "text-gray-500"}`}>
               📍 {availability.location}, {availability.country}
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function AvailabilityModal({ availability, onClose, readOnly = fa
           {/* Skills */}
           {availability.skills && (
             <div className="mb-6">
-              <h3 className={`font-semibold text-lg mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>
+              <h3 className={`font-semibold text-sm mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>
                 Skills & Expertise
               </h3>
               <div className={`text-sm leading-relaxed ${
@@ -194,7 +194,7 @@ export default function AvailabilityModal({ availability, onClose, readOnly = fa
           {/* Availability Details */}
           {availability.availability && (
             <div className="mb-6">
-              <h3 className={`font-semibold text-lg mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>
+              <h3 className={`font-semibold text-sm mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>
                 Availability
               </h3>
               <div className={`text-sm leading-relaxed ${
@@ -208,7 +208,7 @@ export default function AvailabilityModal({ availability, onClose, readOnly = fa
           {/* Description */}
           {availability.description && (
             <div className="mb-6">
-              <h3 className={`font-semibold text-lg mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>
+              <h3 className={`font-semibold text-sm mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>
                 Additional Information
               </h3>
               <div className={`text-sm leading-relaxed ${
@@ -227,7 +227,7 @@ export default function AvailabilityModal({ availability, onClose, readOnly = fa
                 href={availability.cv}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`inline-flex items-center px-6 py-3 rounded-lg font-medium transition ${
+                className={`inline-flex items-center px-6 py-3 rounded-lg font-medium text-sm transition ${
                   darkMode 
                     ? "bg-green-500 text-white hover:bg-green-600"
                     : "bg-green-500 text-white hover:bg-green-600"
@@ -241,7 +241,7 @@ export default function AvailabilityModal({ availability, onClose, readOnly = fa
             {isEmployer && (
               <button
                 onClick={handleHireClick}
-                className={`inline-flex items-center px-6 py-3 rounded-lg font-medium transition ${
+                className={`inline-flex items-center px-6 py-3 rounded-lg font-medium text-sm transition ${
                   darkMode 
                     ? "bg-blue-500 text-white hover:bg-blue-600"
                     : "bg-blue-500 text-white hover:bg-blue-600"
