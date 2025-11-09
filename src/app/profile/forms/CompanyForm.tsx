@@ -68,28 +68,28 @@ export default function CompanyForm({ profile, onSave }: any) {
     }
   };
 
-  const inputClasses = `w-full px-4 py-3 rounded-xl border focus:ring-2 focus:border-transparent transition-all duration-200 ${
+  const inputClasses = `w-full px-3 py-2 text-sm rounded-lg border focus:ring-2 focus:border-transparent transition-all duration-200 ${
     darkMode 
       ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:ring-green-500" 
       : "bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-green-500"
   }`;
 
-  const labelClasses = `block text-sm font-semibold mb-2 ${
+  const labelClasses = `block text-xs font-semibold mb-1 ${
     darkMode ? "text-gray-200" : "text-gray-700"
   }`;
 
-  const cardClass = `max-w-2xl mx-auto p-8 rounded-2xl shadow-xl border transition-colors duration-300 ${
+  const cardClass = `max-w-2xl mx-auto p-4 sm:p-6 rounded-xl shadow-lg border transition-colors duration-300 ${
     darkMode ? "bg-gray-900 border-gray-700" : "bg-white border-gray-100"
   }`;
 
   return (
     <form onSubmit={handleSubmit} className={cardClass}>
-      <div className="text-center mb-8">
-        <h2 className={`text-3xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>Company Profile</h2>
-        <p className={`${darkMode ? "text-gray-300" : "text-gray-600"}`}>Complete your company profile to attract top talent</p>
+      <div className="text-center mb-6">
+        <h2 className={`text-xl sm:text-2xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>Company Profile</h2>
+        <p className={`text-xs sm:text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>Complete your company profile to attract top talent</p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Company Logo */}
         <div className="text-center">
           <div className="relative inline-block">
@@ -97,33 +97,33 @@ export default function CompanyForm({ profile, onSave }: any) {
               <img
                 src={formData.profile_picture_url}
                 alt="Company Logo"
-                className="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-lg"
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl object-cover border-4 border-white shadow-lg"
               />
             ) : (
-              <div className={`w-32 h-32 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center ${
+              <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-xl border-4 border-white shadow-lg flex items-center justify-center ${
                 darkMode ? "bg-gray-800" : "bg-gradient-to-br from-green-100 to-blue-100"
               }`}>
-                <span className="text-2xl">🏢</span>
+                <span className="text-xl sm:text-2xl">🏢</span>
               </div>
             )}
           </div>
-          <label className="block mt-4">
+          <label className="block mt-3">
             <span className="sr-only">Choose company logo</span>
             <input 
               type="file" 
               onChange={handleFileChange} 
-              className={`block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold ${
+              className={`block w-full text-xs file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold ${
                 darkMode 
                   ? "text-gray-300 file:bg-green-900 file:text-green-200 hover:file:bg-green-800" 
                   : "text-gray-500 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
               }`}
             />
           </label>
-          {uploading && <p className={`text-sm mt-2 ${darkMode ? "text-green-400" : "text-green-600"}`}>Uploading logo...</p>}
+          {uploading && <p className={`text-xs mt-1 ${darkMode ? "text-green-400" : "text-green-600"}`}>Uploading logo...</p>}
         </div>
 
         {/* Company Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className={labelClasses}>Company Name *</label>
             <input
@@ -186,7 +186,7 @@ export default function CompanyForm({ profile, onSave }: any) {
               value={formData.company_description}
               onChange={handleChange}
               className={inputClasses}
-              rows={4}
+              rows={3}
               placeholder="Describe your company, mission, values, and what you do..."
             />
           </div>
@@ -216,20 +216,20 @@ export default function CompanyForm({ profile, onSave }: any) {
           </div>
         </div>
 
-        {/* Submit Button - SMALLER SIZE */}
-        <div className="pt-4">
+        {/* Submit Button */}
+        <div className="pt-3">
           <button
             type="submit"
             disabled={saving || uploading}
-            className={`w-full py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:transform-none disabled:hover:shadow-lg ${
+            className={`w-full py-2 px-4 text-sm rounded-lg font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:transform-none disabled:hover:shadow-md ${
               darkMode 
                 ? "bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700" 
                 : "bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600"
             }`}
           >
             {saving ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <span className="flex items-center justify-center text-xs sm:text-sm">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
