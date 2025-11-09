@@ -216,7 +216,7 @@ export default function PublicProfilePage() {
         darkMode ? "bg-gradient-to-br from-blue-900 via-purple-900 to-black" : "bg-gray-50"
       }`}>
         <div className="max-w-6xl mx-auto text-center">
-          <p className={darkMode ? "text-white" : "text-gray-900"}>Loading profile...</p>
+          <p className={`text-sm ${darkMode ? "text-white" : "text-gray-900"}`}>Loading profile...</p>
         </div>
       </div>
     );
@@ -228,18 +228,18 @@ export default function PublicProfilePage() {
         darkMode ? "bg-gradient-to-br from-blue-900 via-purple-900 to-black" : "bg-gray-50"
       }`}>
         <div className="max-w-6xl mx-auto text-center">
-          <h1 className={`text-xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
+          <h1 className={`text-lg font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
             Profile Not Found
           </h1>
-          <p className={`mb-4 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+          <p className={`text-sm mb-4 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
             {error || "This user hasn't set up their profile yet."}
           </p>
-          <p className={`text-sm mb-6 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+          <p className={`text-xs mb-6 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
             Profile ID: {profileId}
           </p>
           <button
             onClick={() => router.back()}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm"
           >
             ← Go Back
           </button>
@@ -285,24 +285,24 @@ export default function PublicProfilePage() {
             
             {/* Profile Information */}
             <div className="flex-1 text-center lg:text-left">
-              <h1 className="text-3xl font-bold mb-2">{displayName}</h1>
+              <h1 className="text-2xl font-bold mb-2">{displayName}</h1>
               
               {/* Role and Type */}
               <div className="flex flex-wrap gap-4 mb-4 justify-center lg:justify-start">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                   darkMode ? "bg-purple-600 text-white" : "bg-purple-100 text-purple-800"
                 }`}>
                   {isEmployer ? "🏢 Employer" : "👤 Job Seeker"}
                 </span>
                 {profile.employer_type && (
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     darkMode ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-800"
                   }`}>
                     {profile.employer_type}
                   </span>
                 )}
                 {profile.country && (
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     darkMode ? "bg-green-600 text-white" : "bg-green-100 text-green-800"
                   }`}>
                     📍 {profile.country}
@@ -313,7 +313,7 @@ export default function PublicProfilePage() {
               {/* Show message if minimal profile due to RLS */}
               {!hasDetailedProfile && (
                 <div className="mt-4">
-                  <p className={darkMode ? "text-yellow-300" : "text-yellow-600"}>
+                  <p className={`text-sm ${darkMode ? "text-yellow-300" : "text-yellow-600"}`}>
                     ⚠️ Profile details are limited due to privacy settings.
                   </p>
                 </div>
@@ -325,24 +325,24 @@ export default function PublicProfilePage() {
                   {/* Contact Information */}
                   {(profile.phone_number || profile.email || profile.website) && (
                     <div>
-                      <h2 className="text-lg font-semibold mb-3 text-purple-400">Contact Information</h2>
+                      <h2 className="text-sm font-semibold mb-3 text-purple-400">Contact Information</h2>
                       <div className="space-y-2">
                         {profile.phone_number && (
-                          <p className="flex items-center gap-2">
+                          <p className="flex items-center gap-2 text-sm">
                             <span>📞</span>
                             <span>{profile.phone_number}</span>
                           </p>
                         )}
                         {profile.email && (
-                          <p className="flex items-center gap-2">
+                          <p className="flex items-center gap-2 text-sm">
                             <span>📧</span>
                             <span>{profile.email}</span>
                           </p>
                         )}
                         {profile.website && (
-                          <p className="flex items-center gap-2">
+                          <p className="flex items-center gap-2 text-sm">
                             <span>🌐</span>
-                            <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                            <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline text-sm">
                               {profile.website}
                             </a>
                           </p>
@@ -354,8 +354,8 @@ export default function PublicProfilePage() {
                   {/* Bio */}
                   {profile.bio && (
                     <div>
-                      <h2 className="text-lg font-semibold mb-3 text-purple-400">About</h2>
-                      <p className={`leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                      <h2 className="text-sm font-semibold mb-3 text-purple-400">About</h2>
+                      <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
                         {profile.bio}
                       </p>
                     </div>
@@ -364,8 +364,8 @@ export default function PublicProfilePage() {
                   {/* Company Description */}
                   {isEmployer && profile.company_description && (
                     <div className="md:col-span-2">
-                      <h2 className="text-lg font-semibold mb-3 text-purple-400">Company Description</h2>
-                      <p className={`leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                      <h2 className="text-sm font-semibold mb-3 text-purple-400">Company Description</h2>
+                      <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
                         {profile.company_description}
                       </p>
                     </div>
@@ -374,8 +374,8 @@ export default function PublicProfilePage() {
                   {/* Skills */}
                   {!isEmployer && profile.skills && (
                     <div className="md:col-span-2">
-                      <h2 className="text-lg font-semibold mb-3 text-purple-400">Skills & Expertise</h2>
-                      <p className={`leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                      <h2 className="text-sm font-semibold mb-3 text-purple-400">Skills & Expertise</h2>
+                      <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
                         {profile.skills}
                       </p>
                     </div>
@@ -390,15 +390,15 @@ export default function PublicProfilePage() {
         <div className={`rounded-xl p-6 shadow-xl backdrop-blur-lg ${
           darkMode ? "bg-white/5" : "bg-white"
         }`}>
-          <h2 className="text-2xl font-bold mb-6">
+          <h2 className="text-lg font-bold mb-6">
             {isEmployer ? "📋 Job Posts" : "💼 Availability Posts"} 
-            <span className="text-sm font-normal opacity-75 ml-2">
+            <span className="text-xs font-normal opacity-75 ml-2">
               ({userPosts.length} {userPosts.length === 1 ? 'post' : 'posts'})
             </span>
           </h2>
 
           {userPosts.length === 0 ? (
-            <p className={`text-center py-8 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+            <p className={`text-sm text-center py-8 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
               No posts yet.
             </p>
           ) : (
@@ -436,8 +436,8 @@ export default function PublicProfilePage() {
                     {isEmployer ? (
                       // Job Post Card
                       <>
-                        <h3 className="font-bold text-lg line-clamp-1 mb-2">{(post as Job).title}</h3>
-                        <p className="text-sm line-clamp-2 mb-3">
+                        <h3 className="font-bold text-sm line-clamp-1 mb-2">{(post as Job).title}</h3>
+                        <p className="text-xs line-clamp-2 mb-3">
                           {(post as Job).company} • {(post as Job).location}, {(post as Job).country}
                         </p>
                         
@@ -462,11 +462,11 @@ export default function PublicProfilePage() {
                     ) : (
                       // Availability Post Card
                       <>
-                        <h3 className="font-bold text-lg line-clamp-1 mb-2">{(post as Availability).desired_job}</h3>
-                        <p className="text-sm line-clamp-2 mb-3">
+                        <h3 className="font-bold text-sm line-clamp-1 mb-2">{(post as Availability).desired_job}</h3>
+                        <p className="text-xs line-clamp-2 mb-3">
                           {(post as Availability).name} • {(post as Availability).location}, {(post as Availability).country}
                         </p>
-                        <p className="text-sm line-clamp-2 mb-3">
+                        <p className="text-xs line-clamp-2 mb-3">
                           {(post as Availability).skills}
                         </p>
                         <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -495,7 +495,7 @@ export default function PublicProfilePage() {
         <div className="mt-8 text-center">
           <button
             onClick={() => router.back()}
-            className={`px-8 py-3 rounded-lg font-semibold transition ${
+            className={`px-8 py-3 rounded-lg font-semibold transition text-sm ${
               darkMode 
                 ? "bg-white/10 hover:bg-white/20 text-white" 
                 : "bg-gray-200 hover:bg-gray-300 text-gray-900"
