@@ -293,19 +293,19 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className={`${bgPrimary} rounded-xl p-6 w-full max-w-md text-center`}>
           <div className="text-6xl mb-4">✅</div>
-          <h2 className={`text-xl font-bold mb-4 ${textPrimary}`}>
+          <h2 className={`text-lg font-bold mb-4 ${textPrimary}`}>
             Already Applied
           </h2>
-          <p className={`mb-6 ${textSecondary}`}>
+          <p className={`mb-6 text-sm ${textSecondary}`}>
             You have already applied to <strong>{jobTitle}</strong>. 
             You cannot submit another application for this position.
           </p>
-          <p className={`text-sm mb-6 ${textSecondary}`}>
+          <p className={`text-xs mb-6 ${textSecondary}`}>
             We'll notify you when the employer reviews your application.
           </p>
           <button
             onClick={onClose}
-            className={`w-full px-4 py-2 rounded-lg ${
+            className={`w-full px-4 py-2 rounded-lg text-sm ${
               darkMode 
                 ? "bg-purple-600 hover:bg-purple-700" 
                 : "bg-blue-500 hover:bg-blue-600"
@@ -321,41 +321,41 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className={`${bgPrimary} rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto`}>
-        <h2 className={`text-xl font-bold mb-4 ${textPrimary}`}>Apply for {jobTitle}</h2>
+        <h2 className={`text-lg font-bold mb-4 ${textPrimary}`}>Apply for {jobTitle}</h2>
         {companyName && (
-          <p className={`text-sm mb-4 ${textSecondary}`}>at {companyName}</p>
+          <p className={`text-xs mb-4 ${textSecondary}`}>at {companyName}</p>
         )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className={`block text-sm font-medium mb-1 ${textPrimary}`}>Email *</label>
+            <label className={`block text-xs font-medium mb-1 ${textPrimary}`}>Email *</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
               required
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${bgSecondary} ${borderColor} ${textPrimary}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${bgSecondary} ${borderColor} ${textPrimary}`}
               placeholder="your.email@example.com"
             />
           </div>
 
           <div>
-            <label className={`block text-sm font-medium mb-1 ${textPrimary}`}>Phone *</label>
+            <label className={`block text-xs font-medium mb-1 ${textPrimary}`}>Phone *</label>
             <input
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
               required
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${bgSecondary} ${borderColor} ${textPrimary}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${bgSecondary} ${borderColor} ${textPrimary}`}
               placeholder="+1234567890"
             />
           </div>
 
           {/* Resume Upload */}
           <div>
-            <label className={`block text-sm font-medium mb-1 ${textPrimary}`}>
+            <label className={`block text-xs font-medium mb-1 ${textPrimary}`}>
               Upload Resume/CV (PDF) *
             </label>
             <input
@@ -363,7 +363,7 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
               accept=".pdf,application/pdf"
               onChange={handleResumeFileChange}
               required
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold ${
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold text-xs ${
                 darkMode 
                   ? 'file:bg-gray-600 file:text-white' 
                   : 'file:bg-gray-200 file:text-gray-700'
@@ -381,7 +381,7 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
 
           {/* Cover Letter Upload */}
           <div>
-            <label className={`block text-sm font-medium mb-1 ${textPrimary}`}>
+            <label className={`block text-xs font-medium mb-1 ${textPrimary}`}>
               Upload Cover Letter (PDF) *
             </label>
             <input
@@ -389,7 +389,7 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
               accept=".pdf,application/pdf"
               onChange={handleCoverLetterFileChange}
               required
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold ${
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold text-xs ${
                 darkMode 
                   ? 'file:bg-gray-600 file:text-white' 
                   : 'file:bg-gray-200 file:text-gray-700'
@@ -407,7 +407,7 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
 
           {/* Optional Additional Notes */}
           <div>
-            <label className={`block text-sm font-medium mb-1 ${textPrimary}`}>
+            <label className={`block text-xs font-medium mb-1 ${textPrimary}`}>
               Additional Notes (Optional)
             </label>
             <textarea
@@ -415,7 +415,7 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
               value={formData.additional_notes}
               onChange={handleInputChange}
               rows={3}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${bgSecondary} ${borderColor} ${textPrimary}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${bgSecondary} ${borderColor} ${textPrimary}`}
               placeholder="Any additional notes or comments for the employer..."
             />
           </div>
@@ -424,14 +424,14 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
             <button
               type="button"
               onClick={onClose}
-              className={`flex-1 px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition ${borderColor} ${textPrimary}`}
+              className={`flex-1 px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition text-sm ${borderColor} ${textPrimary}`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !isFormValid}
-              className={`flex-1 px-4 py-2 rounded-lg transition ${
+              className={`flex-1 px-4 py-2 rounded-lg transition text-sm ${
                 loading || !isFormValid
                   ? 'bg-gray-400 text-white cursor-not-allowed'
                   : 'bg-blue-500 text-white hover:bg-blue-600'

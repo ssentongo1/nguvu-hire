@@ -192,7 +192,7 @@ function PricingContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading plans...</p>
+          <p className="mt-4 text-sm text-gray-600">Loading plans...</p>
         </div>
       </div>
     )
@@ -202,10 +202,10 @@ function PricingContent() {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-xl font-bold text-gray-900 mb-4">
             {getPageTitle()}
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-sm text-gray-600 max-w-2xl mx-auto">
             {getPageDescription()}
           </p>
         </div>
@@ -225,18 +225,18 @@ function PricingContent() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600 mb-2">✓</div>
-              <h3 className="font-semibold text-gray-900">No Hidden Fees</h3>
-              <p className="text-gray-600 text-sm mt-1">Clear pricing with no surprises</p>
+              <h3 className="font-semibold text-sm text-gray-900">No Hidden Fees</h3>
+              <p className="text-gray-600 text-xs mt-1">Clear pricing with no surprises</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600 mb-2">🔄</div>
-              <h3 className="font-semibold text-gray-900">Cancel Anytime</h3>
-              <p className="text-gray-600 text-sm mt-1">No long-term contracts required</p>
+              <h3 className="font-semibold text-sm text-gray-900">Cancel Anytime</h3>
+              <p className="text-gray-600 text-xs mt-1">No long-term contracts required</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600 mb-2">💳</div>
-              <h3 className="font-semibold text-gray-900">Secure Payment</h3>
-              <p className="text-gray-600 text-sm mt-1">Your data is always protected</p>
+              <h3 className="font-semibold text-sm text-gray-900">Secure Payment</h3>
+              <p className="text-gray-600 text-xs mt-1">Your data is always protected</p>
             </div>
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function PricingPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading pricing...</p>
+          <p className="mt-4 text-sm text-gray-600">Loading pricing...</p>
         </div>
       </div>
     }>
