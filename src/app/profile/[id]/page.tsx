@@ -1,4 +1,3 @@
-// src/app/profile/[id]/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -7,7 +6,38 @@ import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
 import JobModal from "@/app/dashboard/JobModal"; 
 
-// Define types
+// Define types based on your exact schema
+type Profile = {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  role?: string;
+  bio?: string;
+  skills?: string;
+  company_name?: string;
+  company_description?: string;
+  profile_picture_url?: string;
+  phone_number?: string;
+  profile_picture?: string;
+  age?: number;
+  country?: string;
+  employer_type?: string;
+  website?: string;
+  linkedin?: string;
+  resume_link?: string;
+  portfolio_link?: string;
+  specialization?: string;
+  years_of_experience?: number;
+  industry?: string;
+  company_size?: string;
+  hourly_rate?: number;
+  portfolio?: string;
+  experience?: string;
+  experience_level?: string;
+  education?: string;
+};
+
+// EXACTLY match the Job type from JobModal.tsx
 type Job = {
   id: string;
   title: string;
@@ -17,7 +47,7 @@ type Job = {
   preferred_location?: string; 
   location: string;
   country: string;
-  preferred_candidate_countries?: string[]; 
+  preferred_candidate_countries?: string[];
   cover_photo?: string | null;
   deadline?: string;  
   created_at: string;
@@ -38,33 +68,9 @@ type Availability = {
   country: string;
   availability: string;
   description: string;
-  cv?: string;
   cover_image?: string;
   created_at: string;
   created_by: string;
-};
-
-type Profile = {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  company_name?: string;
-  bio?: string;
-  skills?: string;
-  profile_picture_url?: string;
-  profile_picture?: string;
-  role?: string;
-  employer_type?: string;
-  phone_number?: string;
-  country?: string;
-  company_description?: string;
-  email?: string;
-  website?: string;
-  linkedin?: string;
-  twitter?: string;
-  github?: string;
-  industry?: string;
-  company_size?: string;
 };
 
 export default function PublicProfilePage() {
@@ -77,30 +83,9 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null); // NEW: For job modal
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   const profileId = params.id as string;
-
-  // Deadline functions
-  const isDeadlineApproaching = (deadline: string) => {
-    const deadlineDate = new Date(deadline);
-    const today = new Date();
-    const threeDaysFromNow = new Date(today);
-    threeDaysFromNow.setDate(today.getDate() + 3);
-    return deadlineDate <= threeDaysFromNow && deadlineDate >= today;
-  };
-
-  const isDeadlinePassed = (deadline: string) => {
-    return new Date(deadline) < new Date();
-  };
-
-  const formatDeadline = (deadline: string) => {
-    return new Date(deadline).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -108,91 +93,65 @@ export default function PublicProfilePage() {
         setError(null);
         console.log("🔄 Fetching profile for ID:", profileId);
 
-        // Try to fetch profile - use maybeSingle to handle no results gracefully
+        // Fetch profile with ALL fields from your exact schema
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", profileId)
           .maybeSingle();
 
-        console.log("📊 Profile fetch result:", { profileData, profileError });
+        console.log("📊 Raw profile data:", profileData);
 
-        // If we get a 406 error, it's likely RLS blocking the request
-        if (profileError && profileError.code === '406') {
-          console.warn("⚠️ RLS might be blocking profile access, trying alternative approach...");
-          
-          // Try to create a minimal profile from available data
-          const { data: userJobsData } = await supabase
-            .from("jobs")
-            .select("company, created_by")
-            .eq("created_by", profileId)
-            .limit(1);
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          throw new Error("Unable to load profile information");
+        }
 
-          if (userJobsData && userJobsData.length > 0) {
-            // Create a basic profile object from available data
-            const minimalProfile: Profile = {
-              id: profileId,
-              company_name: "Employer", // Generic name since we can't access the actual profile
-              role: "employer"
-            };
-            setProfile(minimalProfile);
-            console.log("✅ Created minimal profile due to RLS restrictions");
+        if (!profileData) {
+          throw new Error("Profile not found");
+        }
+
+        setProfile(profileData);
+        console.log("✅ Full profile loaded:", profileData);
+
+        // Get profile picture URL
+        const imagePath = profileData.profile_picture_url || profileData.profile_picture;
+        if (imagePath) {
+          if (imagePath.startsWith("http")) {
+            setImageUrl(imagePath);
           } else {
-            throw new Error("Unable to access profile information");
-          }
-        } 
-        // If it's a different error or no profile found
-        else if (profileError || !profileData) {
-          console.error("❌ Profile fetch error:", profileError);
-          throw new Error("Profile not found or inaccessible");
-        }
-        // If we successfully got the profile
-        else {
-          setProfile(profileData);
-          console.log("✅ Profile found with full data:", profileData);
-
-          // Get profile picture URL
-          const imagePath = profileData.profile_picture_url || profileData.profile_picture;
-          if (imagePath) {
-            if (imagePath.startsWith("http")) {
-              setImageUrl(imagePath);
-            } else {
-              const { data: urlData } = supabase.storage
-                .from("profile-pictures")
-                .getPublicUrl(imagePath);
-              setImageUrl(urlData?.publicUrl ?? null);
-            }
+            const { data: urlData } = supabase.storage
+              .from("profile-pictures")
+              .getPublicUrl(imagePath);
+            setImageUrl(urlData?.publicUrl ?? null);
           }
         }
 
-        // Fetch user's posts (these should be publicly accessible)
-        console.log("📝 Fetching user posts...");
-
-        const { data: jobsData, error: jobsError } = await supabase
+        // Fetch user's posts - ensure we get ALL job fields
+        const { data: jobsData } = await supabase
           .from("jobs")
           .select("*")
           .eq("created_by", profileId)
           .order("created_at", { ascending: false });
 
-        const { data: availabilitiesData, error: availabilitiesError } = await supabase
+        // Transform the data to ensure all required fields have values
+        const transformedJobs = (jobsData || []).map(job => ({
+          ...job,
+          responsibilities: job.responsibilities || "No responsibilities specified",
+          requirements: job.requirements || "No requirements specified",
+          location: job.location || "Location not specified",
+          country: job.country || "US",
+          description: job.description || "No description provided"
+        }));
+
+        const { data: availabilitiesData } = await supabase
           .from("availabilities")
           .select("*")
           .eq("created_by", profileId)
           .order("created_at", { ascending: false });
 
-        if (jobsError) {
-          console.error("Jobs fetch error:", jobsError);
-        } else {
-          setUserJobs(jobsData || []);
-          console.log("✅ Jobs found:", jobsData?.length || 0);
-        }
-
-        if (availabilitiesError) {
-          console.error("Availabilities fetch error:", availabilitiesError);
-        } else {
-          setUserAvailabilities(availabilitiesData || []);
-          console.log("✅ Availabilities found:", availabilitiesData?.length || 0);
-        }
+        setUserJobs(transformedJobs);
+        setUserAvailabilities(availabilitiesData || []);
 
       } catch (error: any) {
         console.error("❌ Error fetching profile data:", error);
@@ -234,9 +193,6 @@ export default function PublicProfilePage() {
           <p className={`text-sm mb-4 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
             {error || "This user hasn't set up their profile yet."}
           </p>
-          <p className={`text-xs mb-6 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-            Profile ID: {profileId}
-          </p>
           <button
             onClick={() => router.back()}
             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm"
@@ -248,13 +204,11 @@ export default function PublicProfilePage() {
     );
   }
 
-  // Determine if this is an employer based on available data
-  const isEmployer = profile.role === "employer" || userJobs.length > 0;
-  const hasDetailedProfile = profile.first_name || profile.company_name || profile.bio;
-  
+  // Determine user type and display name
+  const isEmployer = profile.role === "employer";
   const displayName = isEmployer 
-    ? profile.company_name || `${profile.first_name} ${profile.last_name}`.trim() || "Employer"
-    : `${profile.first_name} ${profile.last_name}`.trim() || "Job Seeker";
+    ? profile.company_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || "Employer"
+    : `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || "Job Seeker";
 
   const userPosts = isEmployer ? userJobs : userAvailabilities;
 
@@ -310,83 +264,157 @@ export default function PublicProfilePage() {
                 )}
               </div>
 
-              {/* Show message if minimal profile due to RLS */}
-              {!hasDetailedProfile && (
-                <div className="mt-4">
-                  <p className={`text-sm ${darkMode ? "text-yellow-300" : "text-yellow-600"}`}>
-                    ⚠️ Profile details are limited due to privacy settings.
-                  </p>
+              {/* Profile Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                
+                {/* Contact Information */}
+                <div>
+                  <h2 className="text-sm font-semibold mb-3 text-purple-400">Contact Information</h2>
+                  <div className="space-y-2">
+                    {profile.phone_number && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>📞</span>
+                        <a href={`tel:${profile.phone_number}`} className="text-blue-400 hover:underline">
+                          {profile.phone_number}
+                        </a>
+                      </p>
+                    )}
+                    {profile.website && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>🌐</span>
+                        <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                          Website
+                        </a>
+                      </p>
+                    )}
+                    {/* Use portfolio_link first, fallback to portfolio */}
+                    {(profile.portfolio_link || profile.portfolio) && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>🎨</span>
+                        <a href={profile.portfolio_link || profile.portfolio} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                          Portfolio
+                        </a>
+                      </p>
+                    )}
+                    {profile.linkedin && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>💼</span>
+                        <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                          LinkedIn
+                        </a>
+                      </p>
+                    )}
+                    {profile.resume_link && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>📄</span>
+                        <a href={profile.resume_link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                          Resume
+                        </a>
+                      </p>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              {/* Detailed profile information */}
-              {hasDetailedProfile && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                  {/* Contact Information */}
-                  {(profile.phone_number || profile.email || profile.website) && (
-                    <div>
-                      <h2 className="text-sm font-semibold mb-3 text-purple-400">Contact Information</h2>
-                      <div className="space-y-2">
-                        {profile.phone_number && (
-                          <p className="flex items-center gap-2 text-sm">
-                            <span>📞</span>
-                            <span>{profile.phone_number}</span>
-                          </p>
-                        )}
-                        {profile.email && (
-                          <p className="flex items-center gap-2 text-sm">
-                            <span>📧</span>
-                            <span>{profile.email}</span>
-                          </p>
-                        )}
-                        {profile.website && (
-                          <p className="flex items-center gap-2 text-sm">
-                            <span>🌐</span>
-                            <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline text-sm">
-                              {profile.website}
-                            </a>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Bio */}
-                  {profile.bio && (
-                    <div>
-                      <h2 className="text-sm font-semibold mb-3 text-purple-400">About</h2>
-                      <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                        {profile.bio}
+                {/* Professional Information */}
+                <div>
+                  <h2 className="text-sm font-semibold mb-3 text-purple-400">Professional Information</h2>
+                  <div className="space-y-2">
+                    {/* Use experience_level first, fallback to experience */}
+                    {(profile.experience_level || profile.experience) && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>📈</span>
+                        <span className="capitalize">{profile.experience_level || profile.experience}</span>
                       </p>
-                    </div>
-                  )}
-
-                  {/* Company Description */}
-                  {isEmployer && profile.company_description && (
-                    <div className="md:col-span-2">
-                      <h2 className="text-sm font-semibold mb-3 text-purple-400">Company Description</h2>
-                      <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                        {profile.company_description}
+                    )}
+                    {profile.years_of_experience && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>📊</span>
+                        <span>{profile.years_of_experience} years experience</span>
                       </p>
-                    </div>
-                  )}
-
-                  {/* Skills */}
-                  {!isEmployer && profile.skills && (
-                    <div className="md:col-span-2">
-                      <h2 className="text-sm font-semibold mb-3 text-purple-400">Skills & Expertise</h2>
-                      <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                        {profile.skills}
+                    )}
+                    {profile.specialization && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>🎯</span>
+                        <span>{profile.specialization}</span>
                       </p>
-                    </div>
-                  )}
+                    )}
+                    {profile.hourly_rate && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>💰</span>
+                        <span>${profile.hourly_rate}/hour</span>
+                      </p>
+                    )}
+                    {profile.education && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>🎓</span>
+                        <span>{profile.education}</span>
+                      </p>
+                    )}
+                    {profile.industry && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>🏭</span>
+                        <span>{profile.industry}</span>
+                      </p>
+                    )}
+                    {profile.company_size && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>👥</span>
+                        <span>{profile.company_size}</span>
+                      </p>
+                    )}
+                    {profile.age && (
+                      <p className="flex items-center gap-2 text-sm">
+                        <span>🎂</span>
+                        <span>{profile.age} years old</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
-              )}
+
+                {/* Bio - Full Width */}
+                {profile.bio && (
+                  <div className="md:col-span-2">
+                    <h2 className="text-sm font-semibold mb-3 text-purple-400">About</h2>
+                    <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                      {profile.bio}
+                    </p>
+                  </div>
+                )}
+
+                {/* Company Description - Full Width */}
+                {isEmployer && profile.company_description && (
+                  <div className="md:col-span-2">
+                    <h2 className="text-sm font-semibold mb-3 text-purple-400">Company Description</h2>
+                    <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                      {profile.company_description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Skills - Full Width */}
+                {profile.skills && (
+                  <div className="md:col-span-2">
+                    <h2 className="text-sm font-semibold mb-3 text-purple-400">Skills & Expertise</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.skills.split(',').map((skill, index) => (
+                        <span
+                          key={index}
+                          className={`px-3 py-1 rounded-full text-xs ${
+                            darkMode ? "bg-purple-600 text-white" : "bg-purple-100 text-purple-800"
+                          }`}
+                        >
+                          {skill.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* User's Posts Section - NOW CLICKABLE */}
+        {/* User's Posts Section */}
         <div className={`rounded-xl p-6 shadow-xl backdrop-blur-lg ${
           darkMode ? "bg-white/5" : "bg-white"
         }`}>
@@ -411,10 +439,8 @@ export default function PublicProfilePage() {
                   }`}
                   onClick={() => {
                     if (isEmployer) {
-                      // Open the job in modal - JUST LIKE DASHBOARD
                       setSelectedJob(post as Job);
                     }
-                    // For availabilities, you can add similar functionality
                   }}
                 >
                   {/* Cover Image */}
@@ -440,23 +466,15 @@ export default function PublicProfilePage() {
                         <p className="text-xs line-clamp-2 mb-3">
                           {(post as Job).company} • {(post as Job).location}, {(post as Job).country}
                         </p>
-                        
-                        {/* Deadline */}
-                        {(post as Job).deadline && (
-                          <div className="mb-3">
-                            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              isDeadlinePassed((post as Job).deadline!) 
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
-                                : isDeadlineApproaching((post as Job).deadline!)
-                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            }`}>
-                              <span className="mr-1">⏰</span>
-                              Deadline {formatDeadline((post as Job).deadline!)}
-                              {isDeadlinePassed((post as Job).deadline!) && ' (Expired)'}
-                              {isDeadlineApproaching((post as Job).deadline!) && !isDeadlinePassed((post as Job).deadline!) && ' (Soon)'}
-                            </div>
-                          </div>
+                        <p className="text-xs line-clamp-2 mb-3 text-gray-600 dark:text-gray-300">
+                          {(post as Job).description}
+                        </p>
+                        {(post as Job).job_type && (
+                          <span className={`px-2 py-1 rounded-full text-xs self-start ${
+                            darkMode ? "bg-purple-600 text-white" : "bg-purple-100 text-purple-800"
+                          }`}>
+                            💼 {(post as Job).job_type}
+                          </span>
                         )}
                       </>
                     ) : (
@@ -466,19 +484,18 @@ export default function PublicProfilePage() {
                         <p className="text-xs line-clamp-2 mb-3">
                           {(post as Availability).name} • {(post as Availability).location}, {(post as Availability).country}
                         </p>
-                        <p className="text-xs line-clamp-2 mb-3">
-                          {(post as Availability).skills}
+                        <p className="text-xs line-clamp-2 mb-3 text-gray-600 dark:text-gray-300">
+                          {(post as Availability).description}
                         </p>
-                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          darkMode ? "bg-purple-600 text-white" : "bg-purple-100 text-purple-800"
-                        }`}>
-                          <span className="mr-1">📅</span>
-                          {(post as Availability).availability}
-                        </div>
+                        {(post as Availability).skills && (
+                          <div className="mb-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Skills:</p>
+                            <p className="text-xs line-clamp-2">{(post as Availability).skills}</p>
+                          </div>
+                        )}
                       </>
                     )}
                     
-                    {/* Bottom row: date */}
                     <div className="mt-auto pt-3">
                       <span className="text-xs text-gray-400">
                         Posted {new Date(post.created_at).toLocaleDateString()}
@@ -506,12 +523,12 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      {/* Job Modal - REUSING EXISTING COMPONENT */}
+      {/* Job Modal */}
       {selectedJob && (
         <JobModal
           job={selectedJob}
           onClose={() => setSelectedJob(null)}
-          readOnly={true} // Set to true since viewers can't edit others' jobs
+          readOnly={true}
         />
       )}
     </div>

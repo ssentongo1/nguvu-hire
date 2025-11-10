@@ -204,6 +204,21 @@ export default function ProfileFormWrapper({ profile }: ProfileFormWrapperProps)
               </div>
             )}
 
+            {/* ADD PORTFOLIO LINK FIELD */}
+            {currentProfile.portfolio_link && (
+              <div className={sectionClass}>
+                <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>🎨 Portfolio</strong>
+                <a 
+                  href={currentProfile.portfolio_link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`mt-1 truncate text-sm ${textClass} hover:underline`}
+                >
+                  {currentProfile.portfolio_link}
+                </a>
+              </div>
+            )}
+
             {currentProfile.industry && (
               <div className={sectionClass}>
                 <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>🏭 Industry</strong>
@@ -221,7 +236,42 @@ export default function ProfileFormWrapper({ profile }: ProfileFormWrapperProps)
             {currentProfile.linkedin && (
               <div className={sectionClass}>
                 <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>💼 LinkedIn</strong>
-                <p className={`mt-1 truncate text-sm ${textClass}`}>{currentProfile.linkedin}</p>
+                <a 
+                  href={currentProfile.linkedin} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`mt-1 truncate text-sm ${textClass} hover:underline`}
+                >
+                  {currentProfile.linkedin}
+                </a>
+              </div>
+            )}
+
+            {currentProfile.github && (
+              <div className={sectionClass}>
+                <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>⚡ GitHub</strong>
+                <a 
+                  href={currentProfile.github} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`mt-1 truncate text-sm ${textClass} hover:underline`}
+                >
+                  {currentProfile.github}
+                </a>
+              </div>
+            )}
+
+            {currentProfile.twitter && (
+              <div className={sectionClass}>
+                <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>🐦 Twitter</strong>
+                <a 
+                  href={currentProfile.twitter} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`mt-1 truncate text-sm ${textClass} hover:underline`}
+                >
+                  {currentProfile.twitter}
+                </a>
               </div>
             )}
 
@@ -229,13 +279,6 @@ export default function ProfileFormWrapper({ profile }: ProfileFormWrapperProps)
               <div className={sectionClass}>
                 <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>💰 Hourly Rate</strong>
                 <p className={`mt-1 text-sm ${textClass}`}>${currentProfile.hourly_rate}/hour</p>
-              </div>
-            )}
-
-            {currentProfile.portfolio && (
-              <div className={sectionClass}>
-                <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>🎨 Portfolio</strong>
-                <p className={`mt-1 truncate text-sm ${textClass}`}>{currentProfile.portfolio}</p>
               </div>
             )}
 
@@ -250,6 +293,13 @@ export default function ProfileFormWrapper({ profile }: ProfileFormWrapperProps)
               <div className={sectionClass}>
                 <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>🎓 Education</strong>
                 <p className={`mt-1 text-sm ${textClass}`}>{currentProfile.education}</p>
+              </div>
+            )}
+
+            {currentProfile.age && (
+              <div className={sectionClass}>
+                <strong className={`text-xs ${darkMode ? "text-white" : "text-gray-900"}`}>🎂 Age</strong>
+                <p className={`mt-1 text-sm ${textClass}`}>{currentProfile.age} years</p>
               </div>
             )}
 
