@@ -100,7 +100,11 @@ export default function JobCard({ job, onClick, canDelete, onDelete, onViewProfi
 
   const handleApplyClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent opening the job modal
-    if (isApplyDisabled) return;
+    if (isApplyDisabled) {
+      // Show message that job has expired
+      alert(`This job has expired. The application deadline was ${job.deadline ? formatDeadline(job.deadline) : 'already passed'}.`);
+      return;
+    }
     console.log("📝 Apply clicked for job:", job.title);
     setShowApplyForm(true);
   };

@@ -113,6 +113,14 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
     });
   };
 
+  const handleApplyClick = () => {
+    if (isApplyDisabled) {
+      alert(`This job has expired. The application deadline was ${job.deadline ? formatDeadline(job.deadline) : 'already passed'}.`);
+      return;
+    }
+    setShowApplyForm(true);
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -240,6 +248,13 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
                     {isDeadlineApproaching(job.deadline) && !isDeadlinePassed(job.deadline) && ' (Soon)'}
                   </span>
                 </div>
+                {isDeadlinePassed(job.deadline) && (
+                  <p className={`text-xs mt-2 ${
+                    darkMode ? 'text-red-300' : 'text-red-700'
+                  }`}>
+                    This job is no longer accepting applications.
+                  </p>
+                )}
               </div>
             )}
 
@@ -297,11 +312,11 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
                 Posted {new Date(job.created_at).toLocaleDateString()}
               </span>
               <button
-                onClick={() => setShowApplyForm(true)}
+                onClick={handleApplyClick}
                 disabled={isApplyDisabled}
                 className={`px-8 py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
                   isApplyDisabled
-                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    ? 'bg-gray-400 text-white cursor-not-allowed hover:scale-100'
                     : darkMode
                       ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
                       : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'

@@ -22,12 +22,37 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+  const [jobDeadline, setJobDeadline] = useState<string | null>(null);
+  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false);
   const { darkMode } = useTheme();
 
-  // Check if user has already applied to this job
+  // Check if user has already applied to this job and get job deadline
   useEffect(() => {
     checkExistingApplication();
+    fetchJobDeadline();
   }, [jobId]);
+
+  const fetchJobDeadline = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('deadline')
+        .eq('id', jobId)
+        .single();
+
+      if (error) throw error;
+      
+      if (data?.deadline) {
+        setJobDeadline(data.deadline);
+        // Check if deadline has passed
+        const deadlineDate = new Date(data.deadline);
+        const today = new Date();
+        setIsDeadlinePassed(deadlineDate < today);
+      }
+    } catch (error) {
+      console.error("Error fetching job deadline:", error);
+    }
+  };
 
   const checkExistingApplication = async () => {
     try {
@@ -172,6 +197,12 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent applications if deadline has passed
+    if (isDeadlinePassed) {
+      alert('This job has expired and is no longer accepting applications.');
+      return;
+    }
+
     // Prevent duplicate applications
     if (hasApplied) {
       alert('You have already applied to this job. You cannot apply again.');
@@ -190,6 +221,22 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
       // Validate required files
       if (!resumeFile || !coverLetterFile) {
         throw new Error('Please upload both resume and cover letter');
+      }
+
+      // Double-check job deadline before proceeding
+      const { data: jobData } = await supabase
+        .from('jobs')
+        .select('deadline')
+        .eq('id', jobId)
+        .single();
+
+      if (jobData?.deadline) {
+        const deadlineDate = new Date(jobData.deadline);
+        const today = new Date();
+        if (deadlineDate < today) {
+          setIsDeadlinePassed(true);
+          throw new Error('This job has expired and is no longer accepting applications.');
+        }
       }
 
       // Check again for existing application (race condition protection)
@@ -285,7 +332,7 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
     }
   };
 
-  const isFormValid = formData.email && formData.phone && resumeFile && coverLetterFile && !hasApplied;
+  const isFormValid = formData.email && formData.phone && resumeFile && coverLetterFile && !hasApplied && !isDeadlinePassed;
 
   // Show different UI if user has already applied
   if (hasApplied) {
@@ -318,12 +365,64 @@ export default function ApplyForm({ jobId, jobTitle, companyName, onClose, onSuc
     );
   }
 
+  // Show expired job UI
+  if (isDeadlinePassed) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className={`${bgPrimary} rounded-xl p-6 w-full max-w-md text-center`}>
+          <div className="text-6xl mb-4">⏰</div>
+          <h2 className={`text-lg font-bold mb-4 ${textPrimary}`}>
+            Application Closed
+          </h2>
+          <p className={`mb-6 text-sm ${textSecondary}`}>
+            The application deadline for <strong>{jobTitle}</strong> has passed.
+          </p>
+          {jobDeadline && (
+            <p className={`text-xs mb-6 ${textSecondary}`}>
+              The deadline was {new Date(jobDeadline).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </p>
+          )}
+          <p className={`text-xs mb-6 ${textSecondary}`}>
+            This job is no longer accepting applications.
+          </p>
+          <button
+            onClick={onClose}
+            className={`w-full px-4 py-2 rounded-lg text-sm ${
+              darkMode 
+                ? "bg-gray-600 hover:bg-gray-700" 
+                : "bg-gray-500 hover:bg-gray-600"
+            } text-white transition`}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className={`${bgPrimary} rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto`}>
         <h2 className={`text-lg font-bold mb-4 ${textPrimary}`}>Apply for {jobTitle}</h2>
         {companyName && (
           <p className={`text-xs mb-4 ${textSecondary}`}>at {companyName}</p>
+        )}
+        
+        {/* Deadline warning if approaching */}
+        {jobDeadline && (
+          <div className={`mb-4 p-3 rounded-lg text-xs ${
+            darkMode ? 'bg-yellow-500/20 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
+          }`}>
+            ⏰ Application deadline: {new Date(jobDeadline).toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric'
+            })}
+          </div>
         )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
