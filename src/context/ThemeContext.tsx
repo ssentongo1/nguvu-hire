@@ -12,7 +12,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [darkMode, setDarkMode] = useState(true);
 
-  // Load theme from localStorage on mount
+  // Load theme from localStorage on mount - SYNCHRONOUSLY
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
     

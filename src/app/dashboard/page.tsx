@@ -1109,18 +1109,14 @@ export default function DashboardPage() {
     return elements;
   };
 
-  // Show initial loading screen
+  // Show initial loading screen - FIXED: Use EXACT SAME background as light mode
   if (initialLoading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${
-        darkMode 
-          ? "bg-gradient-to-br from-blue-700 via-purple-600 to-purple-800 text-white"
-          : "bg-gray-50 text-gray-900"
-      }`}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-3"></div>
           <h2 className="text-base font-semibold mb-2">Loading Dashboard...</h2>
-          <p className="text-sm text-gray-400">Getting everything ready for you</p>
+          <p className="text-sm text-gray-600">Getting everything ready for you</p>
         </div>
       </div>
     );
