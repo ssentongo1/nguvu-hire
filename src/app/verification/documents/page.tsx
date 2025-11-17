@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
 import { Upload, CheckCircle, ArrowLeft, Shield, X } from "lucide-react";
 
-export default function VerificationDocumentsPage() {
+// Move the main content to a separate component that uses useSearchParams
+function VerificationDocumentsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { darkMode } = useTheme();
@@ -51,6 +52,7 @@ export default function VerificationDocumentsPage() {
     getUserProfile();
   }, [router, searchParams]);
 
+  // ... (rest of your existing functions remain the same)
   // Simulate upload progress since Supabase doesn't provide it
   const simulateUploadProgress = (documentType: string) => {
     let progress = 0;
@@ -659,5 +661,21 @@ export default function VerificationDocumentsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function VerificationDocumentsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-3"></div>
+          <p className="text-gray-900">Loading verification documents...</p>
+        </div>
+      </div>
+    }>
+      <VerificationDocumentsContent />
+    </Suspense>
   );
 }
