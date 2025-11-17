@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "@/context/ThemeContext";
 import ApplyForm from "@/components/ApplyForm";
 import { countries } from "@/utils/countries";
+import { supabase } from "@/lib/supabase";
 
 type Job = {
   id: string;
@@ -35,6 +36,39 @@ type Props = {
 export default function JobModal({ job, onClose, readOnly = false }: Props) {
   const [showApplyForm, setShowApplyForm] = useState(false);
   const { darkMode } = useTheme();
+  const [isPosterVerified, setIsPosterVerified] = useState(false);
+  const [loadingVerification, setLoadingVerification] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+      setIsOwner(user?.id === job.created_by);
+    };
+
+    const checkPosterVerification = async () => {
+      try {
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("is_verified")
+          .eq("id", job.created_by)
+          .single();
+
+        if (!error && profileData) {
+          setIsPosterVerified(profileData.is_verified || false);
+        }
+      } catch (error) {
+        console.error("Error checking poster verification:", error);
+      } finally {
+        setLoadingVerification(false);
+      }
+    };
+
+    getCurrentUser();
+    checkPosterVerification();
+  }, [job.created_by]);
 
   // Text color utilities - matching dashboard gradient
   const textPrimary = darkMode ? "text-white" : "text-gray-900";
@@ -65,6 +99,20 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
       const country = countries.find(c => c.code === code);
       return country ? `${country.flag} ${country.name}` : '';
     }).filter(Boolean).join(', ');
+  };
+
+  // Handle verification badge click
+  const handleVerificationClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isPosterVerified) return; // Do nothing if already verified
+    
+    if (isOwner) {
+      // Owner clicking - show "Get Verified" prompt
+      alert("Get verified to build trust with job seekers and get priority visibility in search results. Click 'Verify Now' to proceed.");
+    } else {
+      // Non-owner clicking - show "User not verified" message
+      alert("This employer is not verified. Verified employers have a blue checkmark and are prioritized in search results.");
+    }
   };
 
   // Deadline functions
@@ -129,9 +177,29 @@ export default function JobModal({ job, onClose, readOnly = false }: Props) {
           <div className={`p-6 border-b ${borderColor}`}>
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h2 className={`text-xl font-bold ${textPrimary}`}>
-                  {job.title}
-                </h2>
+                <div className="flex items-center gap-2 mb-2">
+                  <h2 className={`text-xl font-bold ${textPrimary}`}>
+                    {job.title}
+                  </h2>
+                  {/* Verification Badge in Modal */}
+                  {!loadingVerification && (
+                    <div 
+                      className={`text-xs px-2 py-1 rounded font-semibold flex items-center gap-1 cursor-pointer transition-all ${
+                        isPosterVerified 
+                          ? 'bg-blue-500 text-white' 
+                          : darkMode 
+                            ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      } ${!isPosterVerified ? 'hover:scale-105' : ''}`}
+                      onClick={handleVerificationClick}
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                      </svg>
+                      <span>{isPosterVerified ? 'Verified' : 'Verify'}</span>
+                    </div>
+                  )}
+                </div>
                 <p className={`${textSecondary} mt-2 text-sm`}>
                   {job.company} • {job.location}, {jobCountry?.flag} {jobCountry?.name}
                 </p>

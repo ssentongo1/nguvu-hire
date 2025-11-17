@@ -35,6 +35,8 @@ type Profile = {
   experience?: string;
   experience_level?: string;
   education?: string;
+  is_verified?: boolean;
+  verified_at?: string;
 };
 
 // EXACTLY match the Job type from JobModal.tsx
@@ -84,16 +86,24 @@ export default function PublicProfilePage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   const profileId = params.id as string;
 
   useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+      setIsOwner(user?.id === profileId);
+    };
+
     const fetchProfileData = async () => {
       try {
         setError(null);
         console.log("🔄 Fetching profile for ID:", profileId);
 
-        // Fetch profile with ALL fields from your exact schema
+        // Fetch profile with ALL fields from your exact schema INCLUDING verification fields
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -113,6 +123,7 @@ export default function PublicProfilePage() {
 
         setProfile(profileData);
         console.log("✅ Full profile loaded:", profileData);
+        console.log("🔍 Verification status:", profileData.is_verified);
 
         // Get profile picture URL
         const imagePath = profileData.profile_picture_url || profileData.profile_picture;
@@ -162,12 +173,26 @@ export default function PublicProfilePage() {
     };
 
     if (profileId) {
+      getCurrentUser();
       fetchProfileData();
     } else {
       setError("No profile ID provided");
       setLoading(false);
     }
   }, [profileId]);
+
+  const handleProfilePictureClick = () => {
+    if (profile?.is_verified) return; // Do nothing if already verified
+    
+    if (isOwner) {
+      // Owner clicking - show "Get Verified" prompt
+      alert("Get verified to build trust with other users and get priority visibility in search results. Click 'Verify Now' to proceed.");
+    } else {
+      // Non-owner clicking - show "User not verified" message
+      const userType = profile?.role === "employer" ? "employer" : "job seeker";
+      alert(`This ${userType} is not verified. Verified ${userType}s have a blue checkmark and are prioritized in search results.`);
+    }
+  };
 
   if (loading) {
     return (
@@ -224,22 +249,55 @@ export default function PublicProfilePage() {
           darkMode ? "bg-white/5" : "bg-white"
         }`}>
           <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
-            {/* Profile Picture */}
-            <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-purple-400 flex-shrink-0 bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-              {imageUrl ? (
-                <img 
-                  src={imageUrl} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-5xl">{isEmployer ? "🏢" : "👤"}</span>
-              )}
+            {/* Profile Picture with ALWAYS VISIBLE Verification Badge */}
+            <div className="relative flex-shrink-0">
+              <div 
+                className="w-40 h-40 rounded-full overflow-hidden border-4 border-purple-400 bg-gray-300 dark:bg-gray-600 flex items-center justify-center cursor-pointer hover:border-purple-300 transition-colors"
+                onClick={handleProfilePictureClick}
+              >
+                {imageUrl ? (
+                  <img 
+                    src={imageUrl} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-5xl">{isEmployer ? "🏢" : "👤"}</span>
+                )}
+              </div>
+              
+              {/* ALWAYS VISIBLE Verification Badge - Blue if verified, Grey if not */}
+              <div 
+                className={`absolute -bottom-2 -right-2 rounded-full p-2 border-4 ${
+                  darkMode ? "border-gray-800" : "border-white"
+                } cursor-pointer transition-all ${
+                  profile.is_verified 
+                    ? 'bg-blue-500 hover:bg-blue-600' 
+                    : darkMode 
+                      ? 'bg-gray-500 hover:bg-gray-400' 
+                      : 'bg-gray-400 hover:bg-gray-500'
+                } ${!profile.is_verified ? 'hover:scale-110' : ''}`}
+                onClick={handleProfilePictureClick}
+              >
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              </div>
             </div>
             
             {/* Profile Information */}
             <div className="flex-1 text-center lg:text-left">
-              <h1 className="text-2xl font-bold mb-2">{displayName}</h1>
+              <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                <h1 className="text-2xl font-bold">{displayName}</h1>
+                {profile.is_verified && (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white rounded-full text-xs font-medium">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                    Verified
+                  </span>
+                )}
+              </div>
               
               {/* Role and Type */}
               <div className="flex flex-wrap gap-4 mb-4 justify-center lg:justify-start">

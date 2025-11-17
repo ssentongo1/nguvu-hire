@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { LogOut, User, Briefcase, X, Crown } from "lucide-react";
+import { LogOut, User, Briefcase, X, Crown, CheckCircle } from "lucide-react";
 import JobCard from "./JobCard";
 import JobModal from "./JobModal";
 import AvailabilityCard from "./AvailabilityCard";
@@ -36,6 +36,13 @@ export type Job = {
     boost_end: string;
     is_active: boolean;
   }[];
+  profiles?: {
+    username: string;
+    avatar_url: string;
+    full_name: string;
+    company_name: string;
+    is_verified: boolean;
+  } | null;
 };
 
 export type Availability = {
@@ -57,6 +64,12 @@ export type Availability = {
     boost_end: string;
     is_active: boolean;
   }[];
+  profiles?: {
+    username: string;
+    avatar_url: string;
+    full_name: string;
+    is_verified: boolean;
+  } | null;
 };
 
 // Ad placement type
@@ -246,6 +259,7 @@ export default function DashboardPage() {
     role?: string;
     employer_type?: string;
     country?: string;
+    is_verified?: boolean;
   } | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
@@ -370,7 +384,7 @@ export default function DashboardPage() {
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, company_name, profile_picture, profile_picture_url, role, employer_type, country")
+          .select("id, first_name, last_name, company_name, profile_picture, profile_picture_url, role, employer_type, country, is_verified")
           .eq("id", user.id)
           .single();
 
@@ -391,7 +405,7 @@ export default function DashboardPage() {
     loadProfile();
   }, []);
 
-  // SIMPLIFIED FETCH POSTS - WORKING VERSION
+  // FIXED: FETCH POSTS WITH VERIFICATION PRIORITY - SIMPLIFIED QUERIES
   const fetchPosts = async (userRole?: string) => {
     setLoadingPosts(true);
     try {
@@ -400,31 +414,29 @@ export default function DashboardPage() {
       console.log("Fetching posts for role:", role);
       
       if (role === "employer") {
-        // SIMPLE QUERY - Get availabilities first
-        const { data, error } = await supabase
+        // FIXED: Get availabilities with profile data
+        const { data: availabilitiesData, error: availabilitiesError } = await supabase
           .from("availabilities")
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Error fetching availabilities:", error);
-          throw error;
+        if (availabilitiesError) {
+          console.error("Error fetching availabilities:", availabilitiesError);
+          throw availabilitiesError;
         }
-        
-        console.log("Availabilities raw data:", data);
-        
-        // If we have data, enrich it with profile information
-        if (data && data.length > 0) {
+
+        // Enrich with profile and boost data
+        if (availabilitiesData && availabilitiesData.length > 0) {
           const enrichedAvailabilities = await Promise.all(
-            data.map(async (availability) => {
-              // Get profile data for each availability
+            availabilitiesData.map(async (availability) => {
+              // Get profile data
               const { data: profileData } = await supabase
                 .from("profiles")
-                .select("username, avatar_url, full_name")
+                .select("username, avatar_url, full_name, is_verified")
                 .eq("id", availability.created_by)
                 .single();
               
-              // Get boost data if exists
+              // Get boost data
               const { data: boostData } = await supabase
                 .from("boosted_posts")
                 .select("boost_end, is_active")
@@ -439,8 +451,15 @@ export default function DashboardPage() {
               };
             })
           );
-          
-          setAvailabilities(enrichedAvailabilities);
+
+          // Sort by verification status
+          const sortedAvailabilities = enrichedAvailabilities.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+
+          setAvailabilities(sortedAvailabilities);
         } else {
           setAvailabilities([]);
         }
@@ -453,12 +472,12 @@ export default function DashboardPage() {
 
         if (jobsError) {
           console.error("Error fetching jobs:", jobsError);
-        } else {
+        } else if (jobsData) {
           const enrichedJobs = await Promise.all(
-            (jobsData || []).map(async (job) => {
+            jobsData.map(async (job) => {
               const { data: profileData } = await supabase
                 .from("profiles")
-                .select("username, avatar_url, full_name, company_name")
+                .select("username, avatar_url, full_name, company_name, is_verified")
                 .eq("id", job.created_by)
                 .single();
               
@@ -476,34 +495,40 @@ export default function DashboardPage() {
               };
             })
           );
-          setJobs(enrichedJobs);
+
+          // Sort by verification status
+          const sortedJobs = enrichedJobs.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+
+          setJobs(sortedJobs);
         }
       } else {
-        // SIMPLE QUERY - Get jobs first
-        const { data, error } = await supabase
+        // FIXED: Get jobs with profile data
+        const { data: jobsData, error: jobsError } = await supabase
           .from("jobs")
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Error fetching jobs:", error);
-          throw error;
+        if (jobsError) {
+          console.error("Error fetching jobs:", jobsError);
+          throw jobsError;
         }
-        
-        console.log("Jobs raw data:", data);
-        
-        // If we have data, enrich it with profile information
-        if (data && data.length > 0) {
+
+        // Enrich with profile and boost data
+        if (jobsData && jobsData.length > 0) {
           const enrichedJobs = await Promise.all(
-            data.map(async (job) => {
-              // Get profile data for each job
+            jobsData.map(async (job) => {
+              // Get profile data
               const { data: profileData } = await supabase
                 .from("profiles")
-                .select("username, avatar_url, full_name, company_name")
+                .select("username, avatar_url, full_name, company_name, is_verified")
                 .eq("id", job.created_by)
                 .single();
               
-              // Get boost data if exists
+              // Get boost data
               const { data: boostData } = await supabase
                 .from("boosted_posts")
                 .select("boost_end, is_active")
@@ -518,8 +543,15 @@ export default function DashboardPage() {
               };
             })
           );
-          
-          setJobs(enrichedJobs);
+
+          // Sort by verification status
+          const sortedJobs = enrichedJobs.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+
+          setJobs(sortedJobs);
         } else {
           setJobs([]);
         }
@@ -532,12 +564,12 @@ export default function DashboardPage() {
 
         if (availabilitiesError) {
           console.error("Error fetching availabilities:", availabilitiesError);
-        } else {
+        } else if (availabilitiesData) {
           const enrichedAvailabilities = await Promise.all(
-            (availabilitiesData || []).map(async (availability) => {
+            availabilitiesData.map(async (availability) => {
               const { data: profileData } = await supabase
                 .from("profiles")
-                .select("username, avatar_url, full_name")
+                .select("username, avatar_url, full_name, is_verified")
                 .eq("id", availability.created_by)
                 .single();
               
@@ -555,7 +587,15 @@ export default function DashboardPage() {
               };
             })
           );
-          setAvailabilities(enrichedAvailabilities);
+
+          // Sort by verification status
+          const sortedAvailabilities = enrichedAvailabilities.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+
+          setAvailabilities(sortedAvailabilities);
         }
       }
     } catch (err) {
@@ -657,6 +697,11 @@ export default function DashboardPage() {
   // ADD THIS FUNCTION: Handle navigation to pricing page with correct user type
   const handleViewPricing = () => {
     router.push(`/pricing?type=${userType}`);
+  };
+
+  // ADD THIS FUNCTION: Handle navigation to verification page - FIXED TO GO TO VERIFICATION TAB
+  const handleGetVerified = () => {
+    router.push(`/pricing?type=${userType}&verify=true`);
   };
 
   const handleDeleteJob = async (id: string) => {
@@ -769,7 +814,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Search functions for both jobs and availabilities
+  // FIXED: Search functions with verification priority
   const handleSearch = async () => {
     setLoadingResults(true);
     try {
@@ -781,7 +826,41 @@ export default function DashboardPage() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setAvailabilities(data ?? []);
+        
+        // Enrich with profile and boost data, then sort by verification
+        if (data) {
+          const enrichedData = await Promise.all(
+            data.map(async (availability) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("username, avatar_url, full_name, is_verified")
+                .eq("id", availability.created_by)
+                .single();
+              
+              const { data: boostData } = await supabase
+                .from("boosted_posts")
+                .select("boost_end, is_active")
+                .eq("post_id", availability.id)
+                .eq("post_type", "availability")
+                .single();
+
+              return {
+                ...availability,
+                profiles: profileData || null,
+                boosted_posts: boostData ? [boostData] : []
+              };
+            })
+          );
+
+          // Sort by verification status
+          const sortedData = enrichedData.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+          
+          setAvailabilities(sortedData);
+        }
       } else {
         const { data, error } = await supabase
           .from("jobs")
@@ -790,7 +869,41 @@ export default function DashboardPage() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setJobs(data ?? []);
+        
+        // Enrich with profile and boost data, then sort by verification
+        if (data) {
+          const enrichedData = await Promise.all(
+            data.map(async (job) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("username, avatar_url, full_name, company_name, is_verified")
+                .eq("id", job.created_by)
+                .single();
+              
+              const { data: boostData } = await supabase
+                .from("boosted_posts")
+                .select("boost_end, is_active")
+                .eq("post_id", job.id)
+                .eq("post_type", "job")
+                .single();
+
+              return {
+                ...job,
+                profiles: profileData || null,
+                boosted_posts: boostData ? [boostData] : []
+              };
+            })
+          );
+
+          // Sort by verification status
+          const sortedData = enrichedData.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+          
+          setJobs(sortedData);
+        }
       }
     } catch (err) {
       console.error("Search error:", err);
@@ -799,7 +912,7 @@ export default function DashboardPage() {
     }
   };
 
-  // CORRECTED: Location-Based Search Function with Proper Logic
+  // FIXED: Location-Based Search Function with Verification Priority
   const handleRegionSearch = async () => {
     setLoadingRegionResults(true);
     try {
@@ -807,7 +920,7 @@ export default function DashboardPage() {
         // EMPLOYER VIEW: Find candidates based on location filters
         let query = supabase.from("availabilities").select("*");
 
-        // FIXED: Search for candidates FROM specific countries
+        // Search for candidates FROM specific countries
         if (fromCountry) {
           const countryObj = countries.find(c => c.code === fromCountry);
           if (countryObj) {
@@ -816,7 +929,7 @@ export default function DashboardPage() {
           }
         }
 
-        // FIXED: Search for candidates willing to work IN specific locations
+        // Search for candidates willing to work IN specific locations
         if (toCountry) {
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
@@ -828,12 +941,45 @@ export default function DashboardPage() {
         const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
 
-        setAvailabilities(data ?? []);
+        // Enrich with profile and boost data, then sort by verification
+        if (data) {
+          const enrichedData = await Promise.all(
+            data.map(async (availability) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("username, avatar_url, full_name, is_verified")
+                .eq("id", availability.created_by)
+                .single();
+              
+              const { data: boostData } = await supabase
+                .from("boosted_posts")
+                .select("boost_end, is_active")
+                .eq("post_id", availability.id)
+                .eq("post_type", "availability")
+                .single();
+
+              return {
+                ...availability,
+                profiles: profileData || null,
+                boosted_posts: boostData ? [boostData] : []
+              };
+            })
+          );
+
+          // Sort by verification status
+          const sortedData = enrichedData.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+
+          setAvailabilities(sortedData);
+        }
       } else {
-        // JOB SEEKER VIEW: FIXED location-based job search
+        // JOB SEEKER VIEW: Location-based job search
         let query = supabase.from("jobs").select("*");
 
-        // FIXED: "I am from" = Jobs that want to hire FROM my country
+        // "I am from" = Jobs that want to hire FROM my country
         if (fromCountry) {
           const countryObj = countries.find(c => c.code === fromCountry);
           if (countryObj) {
@@ -842,7 +988,7 @@ export default function DashboardPage() {
           }
         }
         
-        // FIXED: "I want to work in" = Jobs located IN specific country
+        // "I want to work in" = Jobs located IN specific country
         if (toCountry) {
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
@@ -854,7 +1000,40 @@ export default function DashboardPage() {
         const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
 
-        setJobs(data ?? []);
+        // Enrich with profile and boost data, then sort by verification
+        if (data) {
+          const enrichedData = await Promise.all(
+            data.map(async (job) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("username, avatar_url, full_name, company_name, is_verified")
+                .eq("id", job.created_by)
+                .single();
+              
+              const { data: boostData } = await supabase
+                .from("boosted_posts")
+                .select("boost_end, is_active")
+                .eq("post_id", job.id)
+                .eq("post_type", "job")
+                .single();
+
+              return {
+                ...job,
+                profiles: profileData || null,
+                boosted_posts: boostData ? [boostData] : []
+              };
+            })
+          );
+
+          // Sort by verification status
+          const sortedData = enrichedData.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+
+          setJobs(sortedData);
+        }
       }
     } catch (err) {
       console.error("Region search error:", err);
@@ -864,7 +1043,7 @@ export default function DashboardPage() {
     }
   };
 
-  // FIXED: Show remote jobs/candidates
+  // FIXED: Show remote jobs/candidates with verification priority
   const handleShowRemote = async () => {
     setLoadingPosts(true);
     try {
@@ -877,7 +1056,41 @@ export default function DashboardPage() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setAvailabilities(data ?? []);
+        
+        // Enrich with profile and boost data, then sort by verification
+        if (data) {
+          const enrichedData = await Promise.all(
+            data.map(async (availability) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("username, avatar_url, full_name, is_verified")
+                .eq("id", availability.created_by)
+                .single();
+              
+              const { data: boostData } = await supabase
+                .from("boosted_posts")
+                .select("boost_end, is_active")
+                .eq("post_id", availability.id)
+                .eq("post_type", "availability")
+                .single();
+
+              return {
+                ...availability,
+                profiles: profileData || null,
+                boosted_posts: boostData ? [boostData] : []
+              };
+            })
+          );
+
+          // Sort by verification status
+          const sortedData = enrichedData.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+          
+          setAvailabilities(sortedData);
+        }
       } else {
         // Show remote jobs
         const { data, error } = await supabase
@@ -887,7 +1100,41 @@ export default function DashboardPage() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setJobs(data ?? []);
+        
+        // Enrich with profile and boost data, then sort by verification
+        if (data) {
+          const enrichedData = await Promise.all(
+            data.map(async (job) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("username, avatar_url, full_name, company_name, is_verified")
+                .eq("id", job.created_by)
+                .single();
+              
+              const { data: boostData } = await supabase
+                .from("boosted_posts")
+                .select("boost_end, is_active")
+                .eq("post_id", job.id)
+                .eq("post_type", "job")
+                .single();
+
+              return {
+                ...job,
+                profiles: profileData || null,
+                boosted_posts: boostData ? [boostData] : []
+              };
+            })
+          );
+
+          // Sort by verification status
+          const sortedData = enrichedData.sort((a, b) => {
+            const aVerified = a.profiles?.is_verified ? 1 : 0;
+            const bVerified = b.profiles?.is_verified ? 1 : 0;
+            return bVerified - aVerified;
+          });
+          
+          setJobs(sortedData);
+        }
       }
     } catch (err) {
       console.error("Error fetching remote posts:", err);
@@ -897,7 +1144,7 @@ export default function DashboardPage() {
     }
   };
 
-  // FIXED: Show local jobs/candidates (user's country)
+  // FIXED: Show local jobs/candidates with verification priority
   const handleShowLocal = async () => {
     const userCountryCode = getUserCountryCode();
     if (userCountryCode) {
@@ -1155,6 +1402,11 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <div className={`text-xs ${textPrimary} hidden sm:block`}>
               Welcome, <span className="font-medium">{getDisplayName()}</span>
+              {profile?.is_verified && (
+                <span className="ml-1 text-blue-400" title="Verified User">
+                  <CheckCircle className="w-3 h-3 inline" />
+                </span>
+              )}
             </div>
 
             <NotificationsBell />
@@ -1186,7 +1438,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Action buttons - Stack on mobile - UPDATED WITH BOOST BUTTON */}
+          {/* Action buttons - Stack on mobile - UPDATED WITH VERIFICATION BUTTON */}
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {isEmployer ? (
               <>
@@ -1212,6 +1464,20 @@ export default function DashboardPage() {
                 >
                   Post Job
                 </button>
+                {/* ADDED VERIFICATION BUTTON - ONLY SHOW IF NOT VERIFIED */}
+                {!profile?.is_verified && (
+                  <button
+                    onClick={handleGetVerified}
+                    className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                      darkMode
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "bg-blue-500 text-white hover:bg-blue-600"
+                    }`}
+                  >
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Get Verified</span>
+                  </button>
+                )}
                 {/* ADDED BOOST BUTTON FOR EMPLOYERS */}
                 <button
                   onClick={handleViewPricing}
@@ -1248,6 +1514,20 @@ export default function DashboardPage() {
                 >
                   Post Availability
                 </button>
+                {/* ADDED VERIFICATION BUTTON - ONLY SHOW IF NOT VERIFIED */}
+                {!profile?.is_verified && (
+                  <button
+                    onClick={handleGetVerified}
+                    className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                      darkMode
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "bg-blue-500 text-white hover:bg-blue-600"
+                    }`}
+                  >
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Get Verified</span>
+                  </button>
+                )}
                 {/* ADDED BOOST BUTTON FOR JOB SEEKERS */}
                 <button
                   onClick={handleViewPricing}
@@ -1265,6 +1545,30 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ADDED: Verification Status Banner - ONLY SHOW IF NOT VERIFIED */}
+      {!profile?.is_verified && (
+        <div className={`rounded-lg p-3 mb-4 ${darkMode ? "bg-blue-500/20 border border-blue-400" : "bg-blue-50 border border-blue-200"}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle className={`w-4 h-4 ${darkMode ? "text-blue-300" : "text-blue-500"}`} />
+              <span className={`text-xs font-medium ${darkMode ? "text-blue-200" : "text-blue-800"}`}>
+                Get verified to appear first in search results
+              </span>
+            </div>
+            <button
+              onClick={handleGetVerified}
+              className={`px-3 py-1 rounded text-xs font-medium transition ${
+                darkMode 
+                  ? "bg-blue-500 text-white hover:bg-blue-600" 
+                  : "bg-blue-500 text-white hover:bg-blue-600"
+              }`}
+            >
+              Verify Now
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ADDED: Unified Navigation Tabs */}
       <div className={`flex gap-1 p-1 rounded-lg mb-4 ${

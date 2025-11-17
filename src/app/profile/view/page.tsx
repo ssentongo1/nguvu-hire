@@ -18,6 +18,8 @@ type Profile = {
   phone_number?: string | null;
   country?: string | null;
   email?: string | null;
+  is_verified?: boolean;
+  verified_at?: string;
 };
 
 export default function ProfileViewPage() {
@@ -26,9 +28,17 @@ export default function ProfileViewPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string>("");
+  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
 
     const fetchProfile = async () => {
       try {
@@ -41,10 +51,11 @@ export default function ProfileViewPage() {
         }
 
         setUserEmail(user.email || "");
+        setIsOwner(true); // This is the user's own profile view page
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, bio, skills, profile_picture, role, phone_number, country")
+          .select("id, first_name, last_name, bio, skills, profile_picture, role, phone_number, country, is_verified, verified_at")
           .eq("id", user.id)
           .single();
 
@@ -74,11 +85,30 @@ export default function ProfileViewPage() {
       }
     };
 
+    getCurrentUser();
     fetchProfile();
     return () => {
       mounted = false;
     };
   }, [router]);
+
+  const handleProfilePictureClick = () => {
+    if (profile?.is_verified) return; // Do nothing if already verified
+    
+    if (isOwner) {
+      // Owner clicking - show "Get Verified" prompt
+      setShowVerificationPrompt(true);
+    } else {
+      // Non-owner clicking - show "User not verified" message
+      const userType = profile?.role === "employer" ? "employer" : "job seeker";
+      alert(`This ${userType} is not verified. Verified ${userType}s have a blue checkmark and are prioritized in search results.`);
+    }
+  };
+
+  const handleVerifyNow = () => {
+    setShowVerificationPrompt(false);
+    router.push("/pricing?verify=true");
+  };
 
   if (loading) {
     return (
@@ -118,18 +148,44 @@ export default function ProfileViewPage() {
         
         {/* Compact Header Row */}
         <div className="flex items-start p-4 border-b border-gray-200">
-          <div className="flex-shrink-0 mr-4">
-            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-300">
+          <div className="flex-shrink-0 mr-4 relative">
+            <div 
+              className="w-16 h-16 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:border-blue-400 transition-colors"
+              onClick={handleProfilePictureClick}
+            >
               <img 
                 src={imageUrl || "/default-icon.png"} 
                 alt="Profile" 
                 className="object-cover w-full h-full"
               />
             </div>
+            {/* FIXED: ALWAYS VISIBLE Verification Badge - Blue if verified, White/Grey if not */}
+            <div 
+              className={`absolute -bottom-1 -right-1 rounded-full p-1 border-2 border-white cursor-pointer transition-all ${
+                profile.is_verified 
+                  ? 'bg-blue-500 hover:bg-blue-600' 
+                  : 'bg-gray-400 hover:bg-gray-500'
+              } ${!profile.is_verified ? 'hover:scale-110' : ''}`}
+              onClick={handleProfilePictureClick}
+            >
+              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+            </div>
           </div>
           
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-gray-800 truncate">{fullName}</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-lg font-bold text-gray-800 truncate">{fullName}</h1>
+              {profile.is_verified && (
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-500 text-white rounded-full text-xs font-medium">
+                  <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                  </svg>
+                  Verified
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-600 capitalize mb-1">
               {profile.role?.replace('_', ' ') || 'User'}
             </p>
@@ -219,6 +275,62 @@ export default function ProfileViewPage() {
           </div>
         </div>
       </div>
+
+      {/* Verification Prompt Modal - Only shown to owner */}
+      {showVerificationPrompt && isOwner && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Get Verified
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Verify your profile to build trust with other users and get priority visibility in search results.
+            </p>
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                  </svg>
+                </div>
+                <span className="text-sm text-gray-700">
+                  Blue verification badge
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">↑</span>
+                </div>
+                <span className="text-sm text-gray-700">
+                  Priority in search results
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+                <span className="text-sm text-gray-700">
+                  Increased trust and credibility
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowVerificationPrompt(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={handleVerifyNow}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
+              >
+                Verify Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

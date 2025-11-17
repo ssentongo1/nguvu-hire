@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { User, Briefcase, Crown, Search, MapPin, X } from "lucide-react";
+import { User, Briefcase, Crown, Search, MapPin, X, CheckCircle } from "lucide-react";
 import { countries } from "@/utils/countries";
 import Pagination from "@/components/Pagination";
 
@@ -34,6 +34,7 @@ type Job = {
     avatar_url: string;
     full_name: string;
     company_name: string;
+    is_verified: boolean;
   } | null;
 };
 
@@ -60,6 +61,7 @@ type Availability = {
     username: string;
     avatar_url: string;
     full_name: string;
+    is_verified: boolean;
   } | null;
 };
 
@@ -113,21 +115,30 @@ function OptimizedImage({ src, alt, className, onClick }: { src: string; alt: st
 // Job Card Component for Public View
 function JobCard({ job, onClick }: { job: Job; onClick: () => void }) {
   const isBoosted = job.boosted_posts?.[0]?.is_active;
+  const isVerified = job.profiles?.is_verified;
   const companyName = job.profiles?.company_name || job.company || "Company";
   
   return (
     <div
       className={`rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition transform hover:scale-[1.02] bg-white border border-gray-200 ${
         isBoosted ? 'ring-2 ring-yellow-400' : ''
-      }`}
+      } ${isVerified ? 'ring-1 ring-blue-400' : ''}`}
       onClick={onClick}
     >
-      {isBoosted && (
-        <div className="absolute top-2 left-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded z-10 font-semibold flex items-center gap-1">
-          <Crown className="w-3 h-3" />
-          Boosted
-        </div>
-      )}
+      <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+        {isBoosted && (
+          <div className="bg-yellow-500 text-black text-xs px-2 py-1 rounded font-semibold flex items-center gap-1">
+            <Crown className="w-3 h-3" />
+            Boosted
+          </div>
+        )}
+        {isVerified && (
+          <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-semibold flex items-center gap-1">
+            <CheckCircle className="w-3 h-3" />
+            Verified
+          </div>
+        )}
+      </div>
       
       <div className="w-full h-40 bg-gray-300 overflow-hidden">
         {job.cover_photo ? (
@@ -178,21 +189,30 @@ function JobCard({ job, onClick }: { job: Job; onClick: () => void }) {
 // Availability Card Component for Public View
 function AvailabilityCard({ availability, onClick }: { availability: Availability; onClick: () => void }) {
   const isBoosted = availability.boosted_posts?.[0]?.is_active;
+  const isVerified = availability.profiles?.is_verified;
   const candidateName = availability.profiles?.full_name || availability.name;
 
   return (
     <div
       className={`rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition transform hover:scale-[1.02] bg-white border border-gray-200 ${
         isBoosted ? 'ring-2 ring-yellow-400' : ''
-      }`}
+      } ${isVerified ? 'ring-1 ring-blue-400' : ''}`}
       onClick={onClick}
     >
-      {isBoosted && (
-        <div className="absolute top-2 left-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded z-10 font-semibold flex items-center gap-1">
-          <Crown className="w-3 h-3" />
-          Boosted
-        </div>
-      )}
+      <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+        {isBoosted && (
+          <div className="bg-yellow-500 text-black text-xs px-2 py-1 rounded font-semibold flex items-center gap-1">
+            <Crown className="w-3 h-3" />
+            Boosted
+          </div>
+        )}
+        {isVerified && (
+          <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-semibold flex items-center gap-1">
+            <CheckCircle className="w-3 h-3" />
+            Verified
+          </div>
+        )}
+      </div>
       
       <div className="w-full h-40 bg-gray-300 overflow-hidden">
         {availability.cover_image ? (
@@ -337,32 +357,46 @@ export default function BrowsePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12; // 12 posts + 3 ads = 15 total cards per page
 
-  // Filter data based on search and location
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = searchQuery === "" || 
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.company?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesLocation = locationFilter === "" || 
-      job.location.toLowerCase().includes(locationFilter.toLowerCase()) ||
-      job.country.toLowerCase().includes(locationFilter.toLowerCase());
-    
-    return matchesSearch && matchesLocation;
-  });
+  // FIXED: Filter data based on search and location - Verified users appear first
+  const filteredJobs = jobs
+    .filter(job => {
+      const matchesSearch = searchQuery === "" || 
+        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.company?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesLocation = locationFilter === "" || 
+        job.location.toLowerCase().includes(locationFilter.toLowerCase()) ||
+        job.country.toLowerCase().includes(locationFilter.toLowerCase());
+      
+      return matchesSearch && matchesLocation;
+    })
+    // Sort verified users first
+    .sort((a, b) => {
+      const aVerified = a.profiles?.is_verified ? 1 : 0;
+      const bVerified = b.profiles?.is_verified ? 1 : 0;
+      return bVerified - aVerified;
+    });
 
-  const filteredAvailabilities = availabilities.filter(availability => {
-    const matchesSearch = searchQuery === "" || 
-      availability.desired_job.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      availability.skills.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      availability.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesLocation = locationFilter === "" || 
-      availability.location.toLowerCase().includes(locationFilter.toLowerCase()) ||
-      availability.country.toLowerCase().includes(locationFilter.toLowerCase());
-    
-    return matchesSearch && matchesLocation;
-  });
+  const filteredAvailabilities = availabilities
+    .filter(availability => {
+      const matchesSearch = searchQuery === "" || 
+        availability.desired_job.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        availability.skills.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        availability.name.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesLocation = locationFilter === "" || 
+        availability.location.toLowerCase().includes(locationFilter.toLowerCase()) ||
+        availability.country.toLowerCase().includes(locationFilter.toLowerCase());
+      
+      return matchesSearch && matchesLocation;
+    })
+    // Sort verified users first
+    .sort((a, b) => {
+      const aVerified = a.profiles?.is_verified ? 1 : 0;
+      const bVerified = b.profiles?.is_verified ? 1 : 0;
+      return bVerified - aVerified;
+    });
 
   // Determine which items to display based on active tab
   const displayItems = activeTab === "jobs" ? filteredJobs : 
@@ -376,12 +410,12 @@ export default function BrowsePage() {
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = displayItems.slice(indexOfFirstPost, indexOfLastPost);
 
-  // Fetch public data
+  // FIXED: Fetch public data with verification priority - SIMPLIFIED QUERIES
   useEffect(() => {
     const fetchPublicData = async () => {
       setLoading(true);
       try {
-        // Fetch jobs
+        // FIXED: Fetch jobs with simple query first
         const { data: jobsData, error: jobsError } = await supabase
           .from("jobs")
           .select("*")
@@ -390,7 +424,7 @@ export default function BrowsePage() {
 
         if (jobsError) throw jobsError;
 
-        // Fetch availabilities
+        // FIXED: Fetch availabilities with simple query first
         const { data: availabilitiesData, error: availabilitiesError } = await supabase
           .from("availabilities")
           .select("*")
@@ -399,12 +433,12 @@ export default function BrowsePage() {
 
         if (availabilitiesError) throw availabilitiesError;
 
-        // Enrich data with profile information
+        // Enrich data with profile and boost information
         const enrichedJobs = await Promise.all(
           (jobsData || []).map(async (job) => {
             const { data: profileData } = await supabase
               .from("profiles")
-              .select("username, avatar_url, full_name, company_name")
+              .select("username, avatar_url, full_name, company_name, is_verified")
               .eq("id", job.created_by)
               .single();
 
@@ -427,7 +461,7 @@ export default function BrowsePage() {
           (availabilitiesData || []).map(async (availability) => {
             const { data: profileData } = await supabase
               .from("profiles")
-              .select("username, avatar_url, full_name")
+              .select("username, avatar_url, full_name, is_verified")
               .eq("id", availability.created_by)
               .single();
 
@@ -446,8 +480,21 @@ export default function BrowsePage() {
           })
         );
 
-        setJobs(enrichedJobs);
-        setAvailabilities(enrichedAvailabilities);
+        // Sort by verification status
+        const sortedJobs = enrichedJobs.sort((a, b) => {
+          const aVerified = a.profiles?.is_verified ? 1 : 0;
+          const bVerified = b.profiles?.is_verified ? 1 : 0;
+          return bVerified - aVerified;
+        });
+
+        const sortedAvailabilities = enrichedAvailabilities.sort((a, b) => {
+          const aVerified = a.profiles?.is_verified ? 1 : 0;
+          const bVerified = b.profiles?.is_verified ? 1 : 0;
+          return bVerified - aVerified;
+        });
+
+        setJobs(sortedJobs);
+        setAvailabilities(sortedAvailabilities);
 
         // Fetch ads
         const { data: adsData } = await supabase
@@ -668,6 +715,16 @@ export default function BrowsePage() {
         </div>
       </div>
 
+      {/* Verification Benefits Banner */}
+      <div className="rounded-lg p-3 mb-4 bg-blue-50 border border-blue-200">
+        <div className="flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-blue-500" />
+          <span className="text-xs font-medium text-blue-800">
+            Verified users appear first in search results. Get verified to stand out!
+          </span>
+        </div>
+      </div>
+
       {/* Tabs - UPDATED WITH SERVICES TAB */}
       <div className="flex gap-1 p-1 rounded-lg mb-4 bg-gray-200">
         <button
@@ -753,7 +810,7 @@ export default function BrowsePage() {
       <div className="text-center mt-8 p-6 rounded-xl bg-white border border-gray-200">
         <h2 className="text-base font-bold mb-3">Ready to Connect?</h2>
         <p className="text-sm mb-4 max-w-2xl mx-auto text-gray-600">
-          Join NguvuHire to apply for jobs, hire talent, and unlock all features
+          Join NguvuHire to apply for jobs, hire talent, get verified, and unlock all features
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
