@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
@@ -13,7 +13,7 @@ const paymentMethods = [
   { id: 'momo', name: 'Mobile Money', icon: '📱' },
 ];
 
-export default function VerificationPaymentPage() {
+function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { darkMode } = useTheme();
@@ -412,5 +412,20 @@ export default function VerificationPaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerificationPaymentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-900">Loading payment...</p>
+        </div>
+      </div>
+    }>
+      <PaymentContent />
+    </Suspense>
   );
 }
