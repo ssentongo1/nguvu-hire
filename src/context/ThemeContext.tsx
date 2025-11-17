@@ -10,7 +10,7 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   // Load theme from localStorage on mount - SYNCHRONOUSLY
   useEffect(() => {
@@ -34,7 +34,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       setDarkMode(true);
       document.documentElement.classList.add('dark');
     }
-    // No else - keep default dark mode for modern browsers
+    // No else - keep default light mode for modern browsers
   }, []);
 
   const toggleDarkMode = () => {
