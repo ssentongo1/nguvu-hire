@@ -284,6 +284,26 @@ export default function DashboardPage() {
   // Real ad placements from database
   const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
 
+  // FIX: Force light mode for new users - check if theme preference exists
+  const [isInitialThemeSet, setIsInitialThemeSet] = useState(false);
+  
+  useEffect(() => {
+    // Check if user has a saved theme preference
+    const savedTheme = localStorage.getItem('darkMode');
+    
+    // If no saved preference exists (new user), default to light mode
+    if (savedTheme === null) {
+      // Force light mode by toggling if currently in dark mode
+      if (darkMode === true) {
+        // Use setTimeout to ensure this runs after the component mounts
+        setTimeout(() => {
+          toggleDarkMode();
+        }, 100);
+      }
+      setIsInitialThemeSet(true);
+    }
+  }, [darkMode, toggleDarkMode]);
+
   // Text color utilities
   const textMuted = darkMode ? "text-gray-300" : "text-gray-600";
   const textPrimary = darkMode ? "text-white" : "text-gray-900";
