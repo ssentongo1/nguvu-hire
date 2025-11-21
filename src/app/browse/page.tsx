@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { User, Briefcase, Crown, Search, MapPin, X, CheckCircle } from "lucide-react";
+import { User, Briefcase, Crown, Search, MapPin, X, CheckCircle, Download } from "lucide-react";
 import { countries } from "@/utils/countries";
 import Pagination from "@/components/Pagination";
 
@@ -352,10 +352,52 @@ export default function BrowsePage() {
   const [locationFilter, setLocationFilter] = useState("");
   const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
   const [selectedAd, setSelectedAd] = useState<AdPlacement | null>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12; // 12 posts + 3 ads = 15 total cards per page
+
+  // PWA Installation handler
+  useEffect(() => {
+    let deferredPrompt: any;
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+      setShowInstallPrompt(true);
+    };
+
+    const handleAppInstalled = () => {
+      console.log('PWA was installed');
+      setShowInstallPrompt(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if ('serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window) {
+      // Trigger install prompt
+      const installPrompt = new Event('beforeinstallprompt');
+      window.dispatchEvent(installPrompt);
+    } else {
+      // Fallback for browsers that don't support the prompt
+      if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        alert('To install the app: Tap the share button 📱 and select "Add to Home Screen"');
+      } else {
+        alert('To install the app: Look for the install icon 📥 in your browser address bar');
+      }
+    }
+  };
 
   // FIXED: Filter data based on search and location - Verified users appear first
   const filteredJobs = jobs
@@ -711,6 +753,26 @@ export default function BrowsePage() {
             className="px-3 py-1.5 rounded-lg text-xs font-medium transition bg-gray-800 text-white hover:bg-gray-900"
           >
             Join Free
+          </button>
+        </div>
+      </div>
+
+      {/* PWA Download Banner */}
+      <div className="rounded-lg p-4 mb-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">💪🏿</div>
+            <div>
+              <h3 className="font-bold text-sm">Get NguvuHire Desktop App</h3>
+              <p className="text-xs opacity-90">Install for faster access, offline browsing & desktop experience</p>
+            </div>
+          </div>
+          <button
+            onClick={handleInstallClick}
+            className="px-4 py-2 bg-white text-purple-600 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-md"
+          >
+            <Download className="w-4 h-4" />
+            Get App
           </button>
         </div>
       </div>
