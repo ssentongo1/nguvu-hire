@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "NguvuHire - Find Jobs & Talent Across Africa",
   description: "Connect job seekers and employers across Africa and beyond",
   manifest: "/manifest.json",
-  themeColor: "#000000",
+  themeColor: "#6366F1",
   keywords: "jobs, africa, employment, hiring, talent, recruitment",
   appleWebApp: {
     capable: true,
@@ -25,8 +25,14 @@ export const metadata: Metadata = {
     title: "NguvuHire",
   },
   icons: {
-    icon: '/favicon-neww2.png',
-    apple: '/icon-192x192.png',
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
 };
 
@@ -42,19 +48,22 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         
         {/* PWA Meta Tags */}
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#6366F1" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="NguvuHire" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
-        <meta name="msapplication-TileColor" content="#000000" />
-        <meta name="msapplication-TileImage" content="/icon-192x192.png" />
-        <meta name="msapplication-config" content="/browserconfig.xml" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="msapplication-TileColor" content="#6366F1" />
+        <meta name="msapplication-TileImage" content="/icon-144x144.png" />
         
         {/* Additional PWA tags for better mobile experience */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="NguvuHire" />
-        <link rel="shortcut icon" href="/favicon-neww2.png" />
+        
+        {/* Favicon links */}
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico" />
       </head>
       <body className={`h-full antialiased ${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProvider>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create All NguvuHire Icons</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+        canvas { border: 2px solid #ccc; border-radius: 20px; display: block; margin: 10px 0; }
+        button { padding: 8px 16px; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .icon-item { text-align: center; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h2>Create All NguvuHire Icons (Right-click and Save Each)</h2>
+    
+    <div class="icon-grid">
+        <!-- Favicon -->
+        <div class="icon-item">
+            <h3>favicon.ico (32x32)</h3>
+            <canvas id="favicon" width="32" height="32"></canvas>
+            <button onclick="saveFavicon()">Download favicon.ico</button>
+        </div>
+
+        <!-- PWA Icons -->
+        <div class="icon-item">
+            <h3>icon-192x192.png</h3>
+            <canvas id="icon192" width="192" height="192"></canvas>
+            <button onclick="save192()">Download icon-192x192.png</button>
+        </div>
+        
+        <div class="icon-item">
+            <h3>icon-512x512.png</h3>
+            <canvas id="icon512" width="512" height="512"></canvas>
+            <button onclick="save512()">Download icon-512x512.png</button>
+        </div>
+
+        <!-- Additional Sizes for Better Support -->
+        <div class="icon-item">
+            <h3>apple-touch-icon.png (180x180)</h3>
+            <canvas id="apple180" width="180" height="180"></canvas>
+            <button onclick="saveApple180()">Download apple-touch-icon.png</button>
+        </div>
+
+        <div class="icon-item">
+            <h3>icon-144x144.png</h3>
+            <canvas id="icon144" width="144" height="144"></canvas>
+            <button onclick="save144()">Download icon-144x144.png</button>
+        </div>
+
+        <div class="icon-item">
+            <h3>icon-256x256.png</h3>
+            <canvas id="icon256" width="256" height="256"></canvas>
+            <button onclick="save256()">Download icon-256x256.png</button>
+        </div>
+    </div>
+
+    <script>
+        function createRoundedIcon(canvas, size, showText = false) {
+            const ctx = canvas.getContext('2d');
+            const radius = size * 0.2; // Rounded corners
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Create rounded rectangle path
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#6366F1');
+            gradient.addColorStop(1, '#3B82F6');
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Emoji - adjust size based on canvas size
+            const emojiSize = size * (size < 100 ? 0.6 : 0.5);
+            ctx.font = `bold ${emojiSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💪🏿', size/2, size/2);
+            
+            // App name for larger icons
+            if (showText && size >= 144) {
+                ctx.font = `bold ${size * 0.08}px Arial`;
+                ctx.fillStyle = 'white';
+                ctx.fillText('NguvuHire', size/2, size * 0.8);
+            }
+        }
+
+        // Create all icons
+        createRoundedIcon(document.getElementById('favicon'), 32);
+        createRoundedIcon(document.getElementById('icon192'), 192, true);
+        createRoundedIcon(document.getElementById('icon512'), 512, true);
+        createRoundedIcon(document.getElementById('apple180'), 180, true);
+        createRoundedIcon(document.getElementById('icon144'), 144, true);
+        createRoundedIcon(document.getElementById('icon256'), 256, true);
+
+        function saveFavicon() {
+            const canvas = document.getElementById('favicon');
+            const link = document.createElement('a');
+            link.download = 'favicon.ico';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function save192() {
+            const canvas = document.getElementById('icon192');
+            const link = document.createElement('a');
+            link.download = 'icon-192x192.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function save512() {
+            const canvas = document.getElementById('icon512');
+            const link = document.createElement('a');
+            link.download = 'icon-512x512.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function saveApple180() {
+            const canvas = document.getElementById('apple180');
+            const link = document.createElement('a');
+            link.download = 'apple-touch-icon.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function save144() {
+            const canvas = document.getElementById('icon144');
+            const link = document.createElement('a');
+            link.download = 'icon-144x144.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function save256() {
+            const canvas = document.getElementById('icon256');
+            const link = document.createElement('a');
+            link.download = 'icon-256x256.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>
