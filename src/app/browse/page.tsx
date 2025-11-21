@@ -4,10 +4,9 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User, Briefcase, Crown, Search, MapPin, X, CheckCircle, Download } from "lucide-react";
-import { countries } from "@/utils/countries";
 import Pagination from "@/components/Pagination";
 
-// Reuse the types from dashboard
+// Types
 type Job = {
   id: string;
   title: string;
@@ -341,38 +340,28 @@ function AdCard({ ad, onClick }: { ad: AdPlacement; onClick: () => void }) {
   );
 }
 
-export default function BrowsePage() {
-  const router = useRouter();
+// SIMPLE PWA Install Hook that actually works
+function usePWAInstall() {
+  const [canInstall, setCanInstall] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"jobs" | "talent" | "services">("jobs");
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
-  const [selectedAd, setSelectedAd] = useState<AdPlacement | null>(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 12; // 12 posts + 3 ads = 15 total cards per page
-
-  // PWA Installation handler
   useEffect(() => {
-    let deferredPrompt: any;
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+      return;
+    }
 
+    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later
-      deferredPrompt = e;
-      setShowInstallPrompt(true);
+      setCanInstall(true);
     };
 
+    // Listen for app installed event
     const handleAppInstalled = () => {
-      console.log('PWA was installed');
-      setShowInstallPrompt(false);
+      setIsInstalled(true);
+      setCanInstall(false);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -384,20 +373,40 @@ export default function BrowsePage() {
     };
   }, []);
 
-  const handleInstallClick = () => {
-    if ('serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window) {
-      // Trigger install prompt
-      const installPrompt = new Event('beforeinstallprompt');
-      window.dispatchEvent(installPrompt);
-    } else {
-      // Fallback for browsers that don't support the prompt
-      if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        alert('To install the app: Tap the share button 📱 and select "Add to Home Screen"');
+  const install = () => {
+    if (!canInstall) {
+      // Show mobile instructions
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        alert('To install on iOS:\n1. Tap the Share button 📱\n2. Scroll down\n3. Tap "Add to Home Screen"');
+      } else if (/Android/i.test(navigator.userAgent)) {
+        alert('To install on Android:\n1. Tap the Menu button (⋮)\n2. Tap "Add to Home Screen"\n3. Tap "Add"');
       } else {
-        alert('To install the app: Look for the install icon 📥 in your browser address bar');
+        alert('Look for the install icon (📥) in your browser address bar!');
       }
+      return false;
     }
+    return true;
   };
+
+  return { install, canInstall, isInstalled };
+}
+
+export default function BrowsePage() {
+  const router = useRouter();
+  const { install, canInstall, isInstalled } = usePWAInstall();
+
+  const [activeTab, setActiveTab] = useState<"jobs" | "talent" | "services">("jobs");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
+  const [selectedAd, setSelectedAd] = useState<AdPlacement | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 12;
 
   // FIXED: Filter data based on search and location - Verified users appear first
   const filteredJobs = jobs
@@ -451,6 +460,15 @@ export default function BrowsePage() {
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = displayItems.slice(indexOfFirstPost, indexOfLastPost);
+
+  const handleInstallClick = () => {
+    const canProceed = install();
+    if (canProceed) {
+      // Trigger the browser's native install prompt
+      const event = new Event('beforeinstallprompt');
+      window.dispatchEvent(event);
+    }
+  };
 
   // FIXED: Fetch public data with verification priority - SIMPLIFIED QUERIES
   useEffect(() => {
@@ -757,25 +775,32 @@ export default function BrowsePage() {
         </div>
       </div>
 
-      {/* PWA Download Banner */}
-      <div className="rounded-lg p-4 mb-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">💪🏿</div>
-            <div>
-              <h3 className="font-bold text-sm">Get NguvuHire Desktop App</h3>
-              <p className="text-xs opacity-90">Install for faster access, offline browsing & desktop experience</p>
+      {/* PWA Download Banner - HIDES WHEN APP IS INSTALLED */}
+      {!isInstalled && (
+        <div className="rounded-lg p-4 mb-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">💪🏿</div>
+              <div>
+                <h3 className="font-bold text-sm">Get NguvuHire App</h3>
+                <p className="text-xs opacity-90">
+                  {canInstall 
+                    ? "Install now for faster access & offline use" 
+                    : "Add to home screen for app-like experience"
+                  }
+                </p>
+              </div>
             </div>
+            <button
+              onClick={handleInstallClick}
+              className="px-4 py-2 bg-white text-purple-600 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-md"
+            >
+              <Download className="w-4 h-4" />
+              {canInstall ? "Install Now" : "Get App"}
+            </button>
           </div>
-          <button
-            onClick={handleInstallClick}
-            className="px-4 py-2 bg-white text-purple-600 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-md"
-          >
-            <Download className="w-4 h-4" />
-            Get App
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Verification Benefits Banner */}
       <div className="rounded-lg p-3 mb-4 bg-blue-50 border border-blue-200">
@@ -787,7 +812,7 @@ export default function BrowsePage() {
         </div>
       </div>
 
-      {/* Tabs - UPDATED WITH SERVICES TAB */}
+      {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-lg mb-4 bg-gray-200">
         <button
           onClick={() => setActiveTab("jobs")}

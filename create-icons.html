@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Rounded NguvuHire Icons</title>
+</head>
+<body>
+    <h2>Right-click each image and "Save as" to your public folder:</h2>
+    
+    <div style="margin: 20px;">
+        <h3>icon-192x192.png (Right-click and Save As)</h3>
+        <canvas id="canvas192" width="192" height="192" style="border: 1px solid #000; border-radius: 20px;"></canvas>
+    </div>
+
+    <div style="margin: 20px;">
+        <h3>icon-512x512.png (Right-click and Save As)</h3>
+        <canvas id="canvas512" width="512" height="512" style="border: 1px solid #000; border-radius: 20px;"></canvas>
+    </div>
+
+    <script>
+        function createRoundedIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const radius = size * 0.2; // Rounded corners
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Create rounded rectangle path
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#6366F1');
+            gradient.addColorStop(1, '#3B82F6');
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Emoji
+            ctx.font = `bold ${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💪🏿', size/2, size/2);
+        }
+
+        // Create both icons
+        createRoundedIcon(document.getElementById('canvas192'), 192);
+        createRoundedIcon(document.getElementById('canvas512'), 512);
+    </script>
+</body>
+</html>
