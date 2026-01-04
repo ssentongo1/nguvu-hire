@@ -11,7 +11,6 @@ const withPWA = require("next-pwa")({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   
-  // No experimental config needed - using --webpack flag in package.json
   output: "standalone",
   
   images: {
