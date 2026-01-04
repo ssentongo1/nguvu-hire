@@ -2,20 +2,20 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import PricingCard from '@/components/PricingCard'
-import { Crown, Shield, CheckCircle, Zap } from 'lucide-react'
+import { Shield, CheckCircle, Zap, TrendingUp, Search, Target, Star, Users, Lock, BadgeCheck, Eye, MessageSquare, Clock } from 'lucide-react'
 
-interface SubscriptionPlan {
+interface BoostPlan {
   id: string
   name: string
   description: string
-  price_monthly: number
-  price_yearly: number | null
-  boost_credits: number
-  max_boost_duration: number
+  price: number
+  duration_days: number
   features: string[]
-  is_active: boolean
-  created_at: string
+  popular?: boolean
+  savings?: string
+  type: 'boost'
+  buttonText: string
+  icon: React.ReactNode
 }
 
 interface VerificationPlan {
@@ -30,20 +30,17 @@ interface VerificationPlan {
   buttonText: string
 }
 
-// Create a separate component that uses useSearchParams
 function PricingContent() {
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const [activeTab, setActiveTab] = useState<'boost' | 'verification'>('boost')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const searchParams = useSearchParams()
   const userType = searchParams.get('type') as 'job_seeker' | 'employer' || 'job_seeker'
   const verifyParam = searchParams.get('verify')
+  const postId = searchParams.get('postId')
 
   useEffect(() => {
-    const demoPlans = createDemoPlans(userType)
-    setPlans(demoPlans)
     setLoading(false)
-  }, [userType])
+  }, [])
 
   useEffect(() => {
     if (verifyParam === 'true') {
@@ -51,248 +48,200 @@ function PricingContent() {
     }
   }, [verifyParam])
 
-  const createDemoPlans = (type: 'job_seeker' | 'employer'): SubscriptionPlan[] => {
-    if (type === 'job_seeker') {
-      return [
-        {
-          id: 'free',
-          name: 'Starter',
-          description: 'Perfect for getting started',
-          price_monthly: 0,
-          price_yearly: 0,
-          boost_credits: 1,
-          max_boost_duration: 3,
-          features: [
-            'Basic profile visibility',
-            'Apply to 10 jobs per month',
-            'Standard search ranking',
-            'Email support',
-            'Resume upload',
-            'Job alerts'
-          ],
-          is_active: true,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 'pro',
-          name: 'Pro Candidate',
-          description: 'Get noticed by top employers',
-          price_monthly: 19,
-          price_yearly: 190,
-          boost_credits: 5,
-          max_boost_duration: 7,
-          features: [
-            'Priority profile ranking',
-            'Unlimited job applications',
-            '5 boost credits monthly',
-            '7-day boost duration',
-            'Advanced analytics',
-            'Direct employer messaging',
-            'Resume review tools',
-            'Priority support'
-          ],
-          is_active: true,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 'business',
-          name: 'Elite Candidate',
-          description: 'Maximum visibility and opportunities',
-          price_monthly: 49,
-          price_yearly: 490,
-          boost_credits: 15,
-          max_boost_duration: 14,
-          features: [
-            'Top-tier profile ranking',
-            'Unlimited job applications',
-            '15 boost credits monthly',
-            '14-day boost duration',
-            'Featured candidate status',
-            'Direct recruiter access',
-            'Career coaching session',
-            'Interview preparation tools',
-            'Salary negotiation guidance',
-            '24/7 premium support'
-          ],
-          is_active: true,
-          created_at: new Date().toISOString()
-        }
-      ]
-    } else {
-      // EMPLOYER PLANS - Completely different from job seeker plans
-      return [
-        {
-          id: 'free',
-          name: 'Starter Employer',
-          description: 'Basic hiring for small teams',
-          price_monthly: 0,
-          price_yearly: 0,
-          boost_credits: 1,
-          max_boost_duration: 3,
-          features: [
-            'Post 1 job at a time',
-            'Basic candidate search',
-            'Up to 50 applications per job',
-            'Standard job visibility',
-            'Email support',
-            'Basic analytics'
-          ],
-          is_active: true,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 'pro',
-          name: 'Pro Employer',
-          description: 'Advanced hiring for growing companies',
-          price_monthly: 99,
-          price_yearly: 990,
-          boost_credits: 5,
-          max_boost_duration: 7,
-          features: [
-            'Post up to 5 jobs simultaneously',
-            'Advanced candidate filtering',
-            'Unlimited applications',
-            '5 boost credits monthly',
-            '7-day boost duration',
-            'AI-powered candidate matching',
-            'Advanced analytics dashboard',
-            'Branded career page',
-            'Priority support',
-            'Custom screening questions'
-          ],
-          is_active: true,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 'business',
-          name: 'Enterprise',
-          description: 'Complete hiring solution for large organizations',
-          price_monthly: 299,
-          price_yearly: 2990,
-          boost_credits: 20,
-          max_boost_duration: 14,
-          features: [
-            'Unlimited job posts',
-            '20 boost credits monthly',
-            '14-day boost duration',
-            'Premium job visibility',
-            'AI candidate ranking',
-            'Advanced analytics & reporting',
-            'Dedicated account manager',
-            'Custom integration support',
-            'Team collaboration tools',
-            'White-label options',
-            'API access',
-            '24/7 phone support'
-          ],
-          is_active: true,
-          created_at: new Date().toISOString()
-        }
-      ]
-    }
-  }
-
-  // Verification plans (same for both user types)
-  const verificationPlans: VerificationPlan[] = [
+  // Boost Plans - OPTIMIZED PRICING
+  const boostPlans: BoostPlan[] = [
     {
-      id: 'basic_verification',
-      name: 'Basic Verification',
-      description: 'Get verified with basic identity check',
-      price: userType === 'employer' ? 14.99 : 9.99,
-      duration: '12 months',
-      type: 'verification',
+      id: 'boost_7days',
+      name: 'Starter Boost',
+      description: 'Get noticed for a week',
+      price: 29,
+      duration_days: 7,
+      type: 'boost',
       features: [
-        'Blue verification badge',
-        'Priority in search results',
-        'Increased trust and credibility',
-        'Basic identity verification',
-        'Valid for 12 months',
-        'Standard processing (3-5 days)'
+        'Top position in relevant feeds',
+        '2x more views than regular posts',
+        'Verified boost badge',
+        'Basic performance analytics',
+        'Email support',
+        '7-day duration'
       ],
-      buttonText: 'Get Verified'
+      buttonText: 'Start Boosting - $29',
+      icon: <TrendingUp className="w-5 h-5" />
     },
     {
-      id: 'premium_verification',
-      name: 'Premium Verification',
-      description: 'Enhanced verification with background check',
-      price: userType === 'employer' ? 29.99 : 19.99,
-      duration: '24 months',
-      type: 'verification',
+      id: 'boost_15days',
+      name: 'Popular Boost',
+      description: 'Extended visibility with premium features',
+      price: 39,
+      duration_days: 15,
+      type: 'boost',
       popular: true,
+      savings: 'Save 35% vs weekly',
       features: [
-        'Everything in Basic',
-        'Enhanced background check',
-        'Featured in verified section',
-        'Priority customer support',
-        'Advanced trust indicators',
-        'Valid for 24 months',
-        'Expedited processing (1-2 days)',
-        'Verification badge animation'
+        'Everything in Starter Boost',
+        'Premium position in feeds',
+        '3x more views than regular posts',
+        'Priority in search results',
+        'Advanced analytics dashboard',
+        '15-day duration',
+        'Performance insights report',
+        'Priority email support'
       ],
-      buttonText: 'Get Premium Verified'
+      buttonText: 'Most Popular - $39',
+      icon: <Target className="w-5 h-5" />
+    },
+    {
+      id: 'boost_30days',
+      name: 'Max Boost',
+      description: 'Maximum exposure with VIP benefits',
+      price: 59,
+      duration_days: 30,
+      type: 'boost',
+      savings: 'Save 48% vs weekly',
+      features: [
+        'Everything in Popular Boost',
+        'Highest priority placement',
+        '4x more views than regular posts',
+        'Featured in homepage spotlight',
+        'Premium analytics + insights',
+        '30-day duration',
+        'Weekly performance reports',
+        'Dedicated support contact',
+        'Competitor analysis',
+        'Renewal discount (20% off)'
+      ],
+      buttonText: 'Maximize Reach - $59',
+      icon: <Zap className="w-5 h-5" />
     }
+  ]
+
+  // Single Lifetime Verification Plan - BETTER PRICING
+  const verificationPlan: VerificationPlan = {
+    id: 'lifetime_verification',
+    name: 'Lifetime Trust Badge',
+    description: 'One-time payment • Permanent verified status',
+    price: 49,
+    duration: 'Lifetime',
+    type: 'verification',
+    popular: true,
+    features: [
+      'Permanent blue verification badge',
+      'Priority in all search results',
+      'Up to 3x more profile views',
+      'Enhanced credibility with employers',
+      'Featured in "Verified Professionals"',
+      'Identity protection & validation',
+      'Priority customer support',
+      'No monthly fees - one payment',
+      'Transferable to future job changes'
+    ],
+    buttonText: 'Get Verified - $49 Once'
+  }
+
+  // Real results statistics
+  const boostResults = [
+    { icon: <Eye className="w-4 h-4" />, text: 'Boosted posts get 200-400% more views' },
+    { icon: <MessageSquare className="w-4 h-4" />, text: '3-5x more messages/interviews' },
+    { icon: <Clock className="w-4 h-4" />, text: 'Results start within 24 hours' }
   ]
 
   const getPageTitle = () => {
     if (activeTab === 'verification') {
-      return "Get Verified & Build Trust"
+      return "Get Verified & Stand Out"
     }
-    if (userType === 'job_seeker') {
-      return "Get Hired Faster with Boost"
-    } else {
-      return "Hire Top Talent Faster with Boost"
-    }
+    return "Boost Your Visibility"
   }
 
   const getPageDescription = () => {
     if (activeTab === 'verification') {
-      return "Verify your profile to build trust with other users and get priority visibility in search results"
+      return "Join trusted professionals with a permanent verification badge"
     }
-    if (userType === 'job_seeker') {
-      return "Boost your profile to stand out to employers and get more interview opportunities"
-    } else {
-      return "Boost your job posts to reach qualified candidates faster and fill positions efficiently"
+    return "Get more views, messages, and opportunities with our proven boost system"
+  }
+
+  const handleBoostSelect = (plan: BoostPlan) => {
+    const params = new URLSearchParams({
+      type: 'boost',
+      planId: plan.id,
+      amount: plan.price.toString(),
+      duration: plan.duration_days.toString(),
+      userType
+    })
+    
+    if (postId) {
+      params.append('postId', postId)
     }
+    
+    window.location.href = `/payments/checkout?${params.toString()}`
   }
 
   const handleVerificationSelect = (plan: VerificationPlan) => {
-    // Redirect to verification payment page
-    window.location.href = `/verification/payment?plan=${plan.id}&type=${userType}`
+    window.location.href = `/payments/checkout?type=verification&planId=${plan.id}&amount=${plan.price}&userType=${userType}`
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-sm text-gray-600">Loading plans...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-3 text-sm text-gray-600">Loading plans...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            <Star className="w-4 h-4" />
+            <span>Proven Results</span>
+          </div>
+          
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
             {getPageTitle()}
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
             {getPageDescription()}
           </p>
+          
+          {postId && activeTab === 'boost' && (
+            <div className="mt-3 inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm">
+              <Target className="w-3.5 h-3.5" />
+              <span className="font-medium">Boosting specific post</span>
+            </div>
+          )}
         </div>
 
+        {/* Results Stats - Only for Boost */}
+        {activeTab === 'boost' && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-white rounded-xl p-4 shadow-sm border">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {boostResults.map((result, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="text-blue-500">
+                      {result.icon}
+                    </div>
+                    <span className="text-sm text-gray-700">{result.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mb-8 md:mb-12">
           <div className="flex rounded-lg bg-white p-1 shadow-sm border">
             <button
               onClick={() => setActiveTab('boost')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-md text-sm font-medium transition ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'boost'
-                  ? 'bg-blue-500 text-white shadow'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <Zap className="w-4 h-4" />
@@ -300,10 +249,10 @@ function PricingContent() {
             </button>
             <button
               onClick={() => setActiveTab('verification')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-md text-sm font-medium transition ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'verification'
-                  ? 'bg-blue-500 text-white shadow'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <Shield className="w-4 h-4" />
@@ -314,172 +263,292 @@ function PricingContent() {
 
         {/* Boost Plans */}
         {activeTab === 'boost' && (
-          <div className="mt-16 grid gap-8 lg:grid-cols-3 lg:max-w-5xl mx-auto">
-            {plans.map((plan, index) => (
-              <PricingCard
-                key={plan.id}
-                plan={plan}
-                userType={userType}
-                isFeatured={index === 1}
-              />
-            ))}
+          <div className="mt-6">
+            {/* Pricing Comparison */}
+            <div className="mb-6 text-center">
+              <div className="inline-flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-blue-100 rounded-full"></div>
+                  <span>Regular Post</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="font-medium">Boosted Post</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Plans Grid */}
+            <div className="grid gap-6 md:gap-8 lg:grid-cols-3 max-w-6xl mx-auto">
+              {boostPlans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className={`relative rounded-xl md:rounded-2xl p-5 md:p-6 transition-all duration-300 hover:scale-[1.01] ${
+                    plan.popular
+                      ? "border-2 border-blue-500 bg-white shadow-xl" 
+                      : "bg-white shadow-md border border-gray-200"
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <span className="px-4 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow">
+                        RECOMMENDED
+                      </span>
+                    </div>
+                  )}
+
+                  {plan.savings && (
+                    <div className="absolute -top-3 right-4">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700">
+                        {plan.savings}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Plan Header */}
+                  <div className="text-center mb-4 md:mb-5">
+                    <div className="flex justify-center mb-3">
+                      <div className={`p-2.5 md:p-3 rounded-full ${
+                        plan.popular ? "bg-gradient-to-r from-blue-500 to-purple-500" : "bg-blue-100"
+                      }`}>
+                        <div className={plan.popular ? "text-white" : "text-blue-500"}>
+                          {plan.icon}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <h3 className={`text-lg md:text-xl font-bold mb-1.5 ${
+                      "text-gray-900"
+                    }`}>
+                      {plan.name}
+                    </h3>
+                    <p className={`text-xs md:text-sm mb-4 text-gray-600`}>
+                      {plan.description}
+                    </p>
+                    
+                    <div className="mb-1.5">
+                      <span className={`text-3xl md:text-4xl font-bold text-gray-900`}>
+                        ${plan.price}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                      <Clock className="w-4 h-4" />
+                      <span>{plan.duration_days} days • ${(plan.price/plan.duration_days).toFixed(2)}/day</span>
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="space-y-2.5 md:space-y-3 mb-6">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2.5">
+                        <CheckCircle className={`w-4 h-4 flex-shrink-0 mt-0.5 text-green-500`} />
+                        <span className={`text-xs md:text-sm text-gray-700`}>
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA Button */}
+                  <button
+                    onClick={() => handleBoostSelect(plan)}
+                    className={`w-full py-3 px-4 md:py-3.5 md:px-5 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 ${
+                      plan.popular
+                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg hover:scale-[1.01]"
+                        : "bg-gray-900 text-white hover:bg-black hover:shadow hover:scale-[1.01]"
+                    }`}
+                  >
+                    {plan.buttonText}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Verification Plans */}
+        {/* Verification Plan */}
         {activeTab === 'verification' && (
-          <div className="mt-16 grid gap-8 lg:grid-cols-2 lg:max-w-4xl mx-auto">
-            {verificationPlans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative rounded-2xl p-8 transition-all duration-300 hover:scale-105 ${
-                  plan.popular
-                    ? "bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 ring-2 ring-purple-400 text-white" 
-                    : "bg-white shadow-xl border border-gray-200"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="px-4 py-1 rounded-full text-xs font-bold bg-yellow-400 text-black">
-                      MOST POPULAR
-                    </span>
+          <div className="mt-6">
+            {/* Why Get Verified */}
+            <div className="mb-8 md:mb-10">
+              <div className="max-w-3xl mx-auto text-center">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Why Professionals Get Verified</h2>
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2 text-sm">For Job Seekers:</h3>
+                      <ul className="space-y-1.5 text-sm text-gray-600">
+                        <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Get 3x more interview requests</li>
+                        <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Higher salary offers (+15-25%)</li>
+                        <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Stand out from hundreds of applicants</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2 text-sm">For Employers:</h3>
+                      <ul className="space-y-1.5 text-sm text-gray-600">
+                        <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Build trust with top talent</li>
+                        <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Attract 40% more qualified candidates</li>
+                        <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Reduce hiring fraud risk</li>
+                      </ul>
+                    </div>
                   </div>
-                )}
+                </div>
+              </div>
+            </div>
+
+            {/* Single Verification Plan Card */}
+            <div className="max-w-md mx-auto">
+              <div className="relative rounded-xl md:rounded-2xl p-6 md:p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white shadow-2xl">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="px-4 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow">
+                    ONE-TIME PAYMENT
+                  </span>
+                </div>
 
                 {/* Plan Header */}
                 <div className="text-center mb-6">
                   <div className="flex justify-center mb-4">
-                    <div className={`p-3 rounded-full ${
-                      plan.popular 
-                        ? "bg-white/20" 
-                        : "bg-blue-100"
-                    }`}>
-                      <Shield className={`w-8 h-8 ${
-                        plan.popular ? "text-white" : "text-blue-500"
-                      }`} />
+                    <div className="p-3 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20">
+                      <BadgeCheck className="w-8 h-8 text-white" />
                     </div>
                   </div>
                   
-                  <h3 className={`text-xl font-bold mb-2 ${
-                    plan.popular ? "text-white" : "text-gray-900"
-                  }`}>
-                    {plan.name}
+                  <h3 className="text-xl md:text-2xl font-bold mb-2">
+                    Lifetime Trust Badge
                   </h3>
-                  <p className={`text-sm mb-4 ${
-                    plan.popular ? "text-blue-100" : "text-gray-600"
-                  }`}>
-                    {plan.description}
+                  <p className="text-gray-300 text-sm mb-5">
+                    Verified forever • No monthly fees
                   </p>
                   
-                  <div className="mb-4">
-                    <span className={`text-4xl font-bold ${
-                      plan.popular ? "text-white" : "text-gray-900"
-                    }`}>
-                      ${plan.price}
+                  <div className="mb-2">
+                    <span className="text-4xl md:text-5xl font-bold">
+                      $49
                     </span>
-                    <span className={`text-sm ml-1 ${
-                      plan.popular ? "text-blue-100" : "text-gray-600"
-                    }`}>
+                    <span className="text-lg ml-2 text-gray-300">
                       one-time
                     </span>
                   </div>
+                  <p className="text-gray-300 text-sm">
+                    Equivalent to just $4/month for first year
+                  </p>
                 </div>
 
                 {/* Features */}
                 <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-3">
-                      <CheckCircle className={`w-5 h-5 flex-shrink-0 ${
-                        plan.popular ? "text-green-300" : "text-green-500"
-                      }`} />
-                      <span className={`text-sm ${
-                        plan.popular ? "text-white" : "text-gray-700"
-                      }`}>
+                  {verificationPlan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-green-400" />
+                      <span className="text-sm">
                         {feature}
                       </span>
                     </li>
                   ))}
                 </ul>
 
+                {/* Value Comparison */}
+                <div className="mb-6 bg-white/5 rounded-lg p-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-300">Other platforms:</span>
+                    <span className="text-gray-400 line-through">$5-15/month</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-semibold mt-2">
+                    <span className="text-white">Nguvu Hire:</span>
+                    <span className="text-green-400">$49 once</span>
+                  </div>
+                </div>
+
                 {/* CTA Button */}
                 <button
-                  onClick={() => handleVerificationSelect(plan)}
-                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
-                    plan.popular
-                      ? "bg-white text-blue-600 hover:bg-gray-100 hover:scale-105"
-                      : "bg-blue-500 text-white hover:bg-blue-600 hover:scale-105"
-                  }`}
+                  onClick={() => handleVerificationSelect(verificationPlan)}
+                  className="w-full py-3.5 px-6 rounded-lg font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 hover:shadow-lg transition-all duration-200"
                 >
-                  {plan.buttonText}
+                  Get Verified Now - $49 Once
                 </button>
+                
+                <p className="text-center text-xs text-gray-400 mt-3">
+                  30-day money-back guarantee if not approved
+                </p>
               </div>
-            ))}
+            </div>
+
+            {/* Security Assurance */}
+            <div className="mt-10 md:mt-12 max-w-2xl mx-auto">
+              <div className="bg-white rounded-xl p-6 shadow-sm border">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Lock className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">100% Secure Verification</h3>
+                    <p className="text-sm text-gray-600">
+                      Your documents are encrypted end-to-end and permanently deleted after verification. 
+                      We use bank-level security and never share your personal information with third parties.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Features Grid */}
-        <div className="mt-16 text-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-2">✓</div>
-              <h3 className="font-semibold text-sm text-gray-900">No Hidden Fees</h3>
-              <p className="text-gray-600 text-xs mt-1">Clear pricing with no surprises</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-2">🔄</div>
-              <h3 className="font-semibold text-sm text-gray-900">Cancel Anytime</h3>
-              <p className="text-gray-600 text-xs mt-1">No long-term contracts required</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-2">💳</div>
-              <h3 className="font-semibold text-sm text-gray-900">Secure Payment</h3>
-              <p className="text-gray-600 text-xs mt-1">Your data is always protected</p>
+        {/* Money-Back Guarantee */}
+        <div className="mt-12 md:mt-16">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">30-Day Results Guarantee</h3>
+                    <p className="text-gray-600 text-sm">
+                      If your boosted post doesn't get at least 2x more views than your average post, 
+                      we'll credit your account for another boost of equal value.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Additional Info for Verification */}
-        {activeTab === 'verification' && (
-          <div className="mt-12 text-center">
-            <div className="max-w-2xl mx-auto">
-              <h3 className="font-semibold text-gray-900 mb-4">How Verification Works</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto mb-2">1</div>
-                  <p>Select Plan & Pay</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto mb-2">2</div>
-                  <p>Upload Documents</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto mb-2">3</div>
-                  <p>Manual Review</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto mb-2">4</div>
-                  <p>Get Verified Badge</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-4">
-                Verification typically takes 1-3 business days. All documents are securely encrypted and deleted after verification.
+        {/* FAQ Section */}
+        <div className="mt-10 md:mt-12 max-w-3xl mx-auto">
+          <h3 className="text-lg md:text-xl font-bold text-center text-gray-900 mb-6">Frequently Asked Questions</h3>
+          <div className="space-y-3">
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <h4 className="font-medium text-gray-900 text-sm md:text-base mb-1">How soon will I see results?</h4>
+              <p className="text-gray-600 text-xs md:text-sm">
+                Boosted posts typically show increased visibility within 2-4 hours. Most users see significant results within the first 24 hours.
+              </p>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <h4 className="font-medium text-gray-900 text-sm md:text-base mb-1">Can I cancel or get a refund?</h4>
+              <p className="text-gray-600 text-xs md:text-sm">
+                Boost purchases are non-refundable but come with our 30-day results guarantee. Verification has a 30-day money-back guarantee if not approved.
+              </p>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <h4 className="font-medium text-gray-900 text-sm md:text-base mb-1">How does the verification process work?</h4>
+              <p className="text-gray-600 text-xs md:text-sm">
+                After payment, you'll upload a government ID. Our team verifies it within 24-48 hours. Once approved, your verified badge appears immediately.
               </p>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
 }
 
-// Main component with Suspense boundary
 export default function PricingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-sm text-gray-600">Loading pricing...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-3 text-sm text-gray-600">Loading...</p>
         </div>
       </div>
     }>
