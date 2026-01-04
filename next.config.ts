@@ -4,16 +4,14 @@ const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === "development"
+  disable: process.env.NODE_ENV === "development",
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   
-  // Remove experimental.turbo entirely
-  // experimental: {},
-  
+  // No experimental config needed - using --webpack flag in package.json
   output: "standalone",
   
   images: {
