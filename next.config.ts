@@ -1,25 +1,24 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
+const withPWA = require("next-pwa")({
+  dest: "public",
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development'
+  disable: process.env.NODE_ENV === "development"
 });
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Disable Turbopack for PWA compatibility
-  experimental: {
-    turbo: undefined,
-  },
-  // Ensure proper static generation
-  output: 'standalone',
-  // Handle image optimization
+  
+  // Remove experimental.turbo entirely
+  // experimental: {},
+  
+  output: "standalone",
+  
   images: {
     domains: [],
-    unoptimized: process.env.NODE_ENV === 'development',
+    unoptimized: process.env.NODE_ENV === "development",
   },
 };
 
