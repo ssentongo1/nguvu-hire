@@ -12,13 +12,25 @@ interface CheckoutParams {
   postId?: string
 }
 
-export default function CheckoutPage() {
+export default function CheckoutPageWrapper() {
+  // Ensure this runs only on the client
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null // prevent SSR prerender
+
+  return <CheckoutPage />
+}
+
+function CheckoutPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Only run if searchParams exist
     if (!searchParams) return
 
     async function createCheckout() {
@@ -54,7 +66,6 @@ export default function CheckoutPage() {
         const data = await res.json()
 
         if (res.ok && data.checkoutUrl) {
-          // Redirect user to Pesapal checkout page
           window.location.href = data.checkoutUrl
         } else {
           console.error('Failed to initiate payment:', data)
