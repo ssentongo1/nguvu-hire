@@ -87,8 +87,9 @@ export default function Home() {
             }),
           });
 
-          if (!response.ok) {
-            const profileData = await response.json();
+          const profileData = await response.json();
+
+          if (!response.ok || profileData.error) {
             console.error("Profile Creation Error:", profileData.error);
             setError(profileData.error || "Failed to create profile");
             return;
@@ -117,27 +118,26 @@ export default function Home() {
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-        <p className="text-sm text-gray-600">Loading...</p>
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">Loading...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-3">
-            💪🏿 NguvuHire
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-3">💪🏿 NguvuHire</h1>
           <p className="text-lg md:text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
-            Find Jobs & Talent Across Africa - Browse Freely, Connect Smartly
+            Find Jobs & Talent WorldWide - Browse Freely, Connect Smartly
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8">
             <button
               onClick={handleBrowseAsGuest}
@@ -247,7 +247,7 @@ export default function Home() {
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   >
                     <option value="">-- Select Your Country --</option>
-                    {countries.map(country => (
+                    {countries.map((country) => (
                       <option key={country.code} value={country.name}>
                         {country.flag} {country.name}
                       </option>
@@ -301,8 +301,8 @@ export default function Home() {
               {error && <p className="text-red-500 text-center text-xs font-medium">{error}</p>}
               {resetMessage && <p className="text-green-500 text-center text-xs font-medium">{resetMessage}</p>}
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-[1.02] shadow-md"
               >
                 {isLogin ? "Log In" : "Create Account"}
@@ -319,8 +319,8 @@ export default function Home() {
 
             <p className="mt-4 text-center text-xs text-gray-600 border-t border-gray-200 pt-4">
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-              <button 
-                onClick={() => setIsLogin(!isLogin)} 
+              <button
+                onClick={() => setIsLogin(!isLogin)}
                 className="text-blue-600 hover:text-blue-700 font-semibold transition"
               >
                 {isLogin ? "Sign Up" : "Log In"}
