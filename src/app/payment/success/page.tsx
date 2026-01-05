@@ -1,26 +1,20 @@
+// src/app/payment/success/page.tsx
+import Link from "next/link";
 import React from "react";
 
-interface Props {
-  searchParams: { ref?: string };
-}
-
-export default function PaymentSuccess({ searchParams }: Props) {
-  const ref = searchParams.ref;
-
+export default function PaymentSuccessPage() {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-green-50">
-      <h1 className="text-3xl font-bold text-green-700">Payment Successful!</h1>
-      <p className="mt-4 text-lg text-green-800">
-        {ref
-          ? `Reference: ${ref}`
-          : "Thank you for your payment. Your account/post has been updated."}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-green-50 p-6">
+      <h1 className="text-3xl font-bold text-green-700 mb-4">Payment Successful!</h1>
+      <p className="text-lg text-green-800 mb-6">
+        Thank you for completing your payment. Your account or post has been updated.
       </p>
-      <a
+      <Link
         href="/"
-        className="mt-6 px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-800"
+        className="px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700 transition"
       >
-        Go to Dashboard
-      </a>
+        Return Home
+      </Link>
     </div>
   );
 }

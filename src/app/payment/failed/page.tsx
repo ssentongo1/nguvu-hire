@@ -1,28 +1,20 @@
+// src/app/payment/failed/page.tsx
+import Link from "next/link";
 import React from "react";
 
-interface Props {
-  searchParams: { reason?: string; status?: string };
-}
-
-export default function PaymentFailed({ searchParams }: Props) {
-  const { reason, status } = searchParams;
-
+export default function PaymentFailedPage() {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-red-50">
-      <h1 className="text-3xl font-bold text-red-700">Payment Failed</h1>
-      <p className="mt-4 text-lg text-red-800">
-        {reason
-          ? `Reason: ${reason}`
-          : status
-          ? `Payment status: ${status}`
-          : "There was an error processing your payment."}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 p-6">
+      <h1 className="text-3xl font-bold text-red-700 mb-4">Payment Failed</h1>
+      <p className="text-lg text-red-800 mb-6">
+        Unfortunately, your payment could not be processed. Please try again.
       </p>
-      <a
+      <Link
         href="/"
-        className="mt-6 px-6 py-3 bg-red-700 text-white rounded-lg hover:bg-red-800"
+        className="px-6 py-3 bg-red-600 text-white rounded hover:bg-red-700 transition"
       >
-        Go Back
-      </a>
+        Go Back Home
+      </Link>
     </div>
   );
 }
