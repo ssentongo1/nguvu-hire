@@ -1,4 +1,3 @@
-// src/utils/pesapal.ts
 import crypto from 'crypto';
 
 export interface PesapalPaymentRequest {
@@ -15,6 +14,12 @@ export interface PesapalPaymentRequest {
     first_name: string;
     middle_name?: string;
     last_name: string;
+    line_1?: string;
+    line_2?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    zip_code?: string;
   };
 }
 
@@ -26,6 +31,22 @@ export interface PesapalPaymentResponse {
   message?: string;
 }
 
+export interface PesapalPaymentStatus {
+  payment_method: string;
+  amount: number;
+  created_date: string;
+  confirmation_code: string;
+  payment_status_description: string;
+  description: string;
+  message: string;
+  payment_account: string;
+  call_back_url: string;
+  status_code: number;
+  merchant_reference: string;
+  payment_tracking_id: string;
+  currency: string;
+}
+
 class PesapalAPI {
   private consumerKey: string;
   private consumerSecret: string;
@@ -34,32 +55,19 @@ class PesapalAPI {
   constructor() {
     this.consumerKey = process.env.PESAPAL_CONSUMER_KEY || '';
     this.consumerSecret = process.env.PESAPAL_CONSUMER_SECRET || '';
+    this.baseUrl = process.env.PESAPAL_API_URL || '';
 
-    if (!this.consumerKey || !this.consumerSecret) {
-      throw new Error('❌ Pesapal credentials missing');
+    if (!this.consumerKey || !this.consumerSecret || !this.baseUrl) {
+      throw new Error('Pesapal credentials or API URL missing in environment variables.');
     }
 
-    // ✅ SINGLE SOURCE OF TRUTH (NO /api HERE)
-    this.baseUrl =
-      process.env.PESAPAL_API_URL?.replace(/\/api\/?$/, '') ||
-      'https://cybqa.pesapal.com/pesapalv3';
-
-    console.log('✅ Pesapal initialized:', {
-      baseUrl: this.baseUrl,
-      env: process.env.PESAPAL_ENVIRONMENT,
-    });
+    console.log('✅ Pesapal API initialized:', { baseUrl: this.baseUrl });
   }
 
-  // =========================
-  // AUTH
-  // =========================
   private async getAccessToken(): Promise<string> {
-    const res = await fetch(`${this.baseUrl}/api/Auth/RequestToken`, {
+    const res = await fetch(`${this.baseUrl}/Auth/RequestToken`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
         consumer_key: this.consumerKey,
         consumer_secret: this.consumerSecret,
@@ -68,38 +76,26 @@ class PesapalAPI {
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`Pesapal auth failed: ${err}`);
+      throw new Error(`Failed to get Pesapal token: ${err}`);
     }
 
     const data = await res.json();
-
-    if (!data.token) {
-      throw new Error('Pesapal token missing in response');
-    }
-
+    if (!data.token) throw new Error('Pesapal token not received');
     return data.token;
   }
 
-  // =========================
-  // SUBMIT PAYMENT
-  // =========================
-  async submitOrder(
-    payment: PesapalPaymentRequest
-  ): Promise<PesapalPaymentResponse> {
+  async submitOrder(paymentRequest: PesapalPaymentRequest): Promise<PesapalPaymentResponse> {
     const token = await this.getAccessToken();
 
-    const res = await fetch(
-      `${this.baseUrl}/api/Transactions/SubmitOrderRequest`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payment),
-      }
-    );
+    const res = await fetch(`${this.baseUrl}/Transactions/SubmitOrderRequest`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(paymentRequest),
+    });
 
     if (!res.ok) {
       const err = await res.text();
@@ -107,7 +103,6 @@ class PesapalAPI {
     }
 
     const data = await res.json();
-
     return {
       order_tracking_id: data.order_tracking_id,
       merchant_reference: data.merchant_reference,
@@ -117,60 +112,60 @@ class PesapalAPI {
     };
   }
 
-  // =========================
-  // TRANSACTION STATUS
-  // =========================
-  async getTransactionStatus(orderTrackingId: string) {
+  async getPaymentStatus(orderTrackingId: string): Promise<PesapalPaymentStatus> {
     const token = await this.getAccessToken();
 
     const res = await fetch(
-      `${this.baseUrl}/api/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(
+      `${this.baseUrl}/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(
         orderTrackingId
       )}`,
       {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
       }
     );
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`Status check failed: ${err}`);
+      throw new Error(`Get payment status failed: ${err}`);
     }
 
     return res.json();
   }
 
-  // =========================
-  // IPN REGISTRATION (OPTIONAL)
-  // =========================
-  async registerIPN(url: string) {
+  async getRegisteredIPNs(): Promise<any[]> {
     const token = await this.getAccessToken();
 
-    const res = await fetch(`${this.baseUrl}/api/URLSetup/RegisterIPN`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        url,
-        ipn_notification_type: 'GET',
-      }),
+    const res = await fetch(`${this.baseUrl}/URLSetup/GetIpnList`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`IPN registration failed: ${err}`);
+      throw new Error(`Failed to get registered IPNs: ${err}`);
+    }
+
+    return res.json();
+  }
+
+  async registerIPN(url: string): Promise<any> {
+    const token = await this.getAccessToken();
+
+    const res = await fetch(`${this.baseUrl}/URLSetup/RegisterIPN`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, ipn_notification_type: 'GET' }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Failed to register IPN: ${err}`);
     }
 
     return res.json();
   }
 }
 
+// Export singleton
 const pesapalAPI = new PesapalAPI();
 export default pesapalAPI;
+

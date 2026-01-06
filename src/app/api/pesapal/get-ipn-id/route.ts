@@ -1,49 +1,49 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const baseUrl = process.env.PESAPAL_API_URL!
+    const baseUrl = process.env.PESAPAL_API_URL!;
+    const consumerKey = process.env.PESAPAL_CONSUMER_KEY!;
+    const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET!;
 
-    // 1. Authenticate
-    const authRes = await fetch(`${baseUrl}/api/Auth/RequestToken`, {
+    // 1️⃣ Authenticate
+    const authRes = await fetch(`${baseUrl}/Auth/RequestToken`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        consumer_key: process.env.PESAPAL_CONSUMER_KEY,
-        consumer_secret: process.env.PESAPAL_CONSUMER_SECRET
-      })
-    })
+      body: JSON.stringify({ consumer_key: consumerKey, consumer_secret: consumerSecret }),
+    });
 
-    const authData = await authRes.json()
+    const authData = await authRes.json();
 
     if (!authRes.ok || !authData.token) {
       return NextResponse.json(
         { error: 'Failed to authenticate', authData },
         { status: 500 }
-      )
+      );
     }
 
-    // 2. Get registered IPNs
-    const ipnRes = await fetch(`${baseUrl}/api/URLSetup/GetIpnList`, {
+    // 2️⃣ Get registered IPNs
+    const ipnRes = await fetch(`${baseUrl}/URLSetup/GetIpnList`, {
       headers: {
         Accept: 'application/json',
-        Authorization: `Bearer ${authData.token}`
-      }
-    })
+        Authorization: `Bearer ${authData.token}`,
+      },
+    });
 
-    const ipnData = await ipnRes.json()
+    const ipnData = await ipnRes.json();
 
     return NextResponse.json({
       success: true,
-      ipns: ipnData
-    })
+      ipns: ipnData,
+    });
   } catch (error: any) {
+    console.error('Get IPN ID error:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: error.message || 'Failed to fetch IPNs' },
       { status: 500 }
-    )
+    );
   }
 }

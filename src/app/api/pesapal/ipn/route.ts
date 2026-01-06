@@ -1,22 +1,22 @@
-// src/app/api/pesapal/ipn/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Supabase
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ✅ BASE URL ONLY — NEVER /api
-const PESAPAL_BASE_URL = process.env.PESAPAL_API_URL!.replace(/\/api\/?$/, '');
+// Pesapal
+const PESAPAL_BASE_URL = process.env.PESAPAL_API_URL!;
 const PESAPAL_CONSUMER_KEY = process.env.PESAPAL_CONSUMER_KEY!;
 const PESAPAL_CONSUMER_SECRET = process.env.PESAPAL_CONSUMER_SECRET!;
 
 // =========================
-// AUTH
+// GET PESAPAL TOKEN
 // =========================
 async function getPesapalToken(): Promise<string> {
-  const res = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
+  const res = await fetch(`${PESAPAL_BASE_URL}/Auth/RequestToken`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -34,11 +34,12 @@ async function getPesapalToken(): Promise<string> {
   }
 
   const data = await res.json();
+  if (!data.token) throw new Error('Pesapal token not received');
   return data.token;
 }
 
 // =========================
-// IPN HANDLER
+// POST: IPN HANDLER
 // =========================
 export async function POST(req: NextRequest) {
   try {
@@ -51,10 +52,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid IPN payload' }, { status: 400 });
     }
 
+    // 1️⃣ Get Pesapal token
     const token = await getPesapalToken();
 
+    // 2️⃣ Get payment status
     const statusRes = await fetch(
-      `${PESAPAL_BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(
+      `${PESAPAL_BASE_URL}/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(
         orderTrackingId
       )}`,
       {
@@ -67,13 +70,12 @@ export async function POST(req: NextRequest) {
 
     const statusData = await statusRes.json();
 
+    // Only proceed if completed
     if (statusData.payment_status_description !== 'Completed') {
       return NextResponse.json({ success: true, ignored: true });
     }
 
-    // Merchant reference format:
-    // NGUVU-VERIFICATION-UUID
-    // NGUVU-BOOST-UUID
+    // 3️⃣ Update Supabase based on merchant reference
     const [, type] = merchantReference.split('-');
 
     if (type === 'VERIFICATION') {
@@ -95,6 +97,7 @@ export async function POST(req: NextRequest) {
         .eq('boost_reference', merchantReference);
     }
 
+    // 4️⃣ Return success to Pesapal
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('IPN error:', err);
