@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase, testSupabaseConnection } from "@/lib/supabase";
 import { countries } from "@/utils/countries";
-import { Mail, Lock, Globe, User, Building, ChevronRight, X, Sparkles, CheckCircle, ArrowRight, Search, Briefcase, Users, Zap, ChevronDown } from "lucide-react";
+import { Mail, Lock, Globe, User, Building, ChevronRight, X, Sparkles, CheckCircle, ArrowRight, Search, ChevronDown } from "lucide-react";
 
-export default function Home() {
+function HomeContent() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"job_seeker" | "employer">("job_seeker");
   const [employerType, setEmployerType] = useState("");
@@ -299,7 +299,7 @@ export default function Home() {
 
   const features = [
     {
-      icon: <Briefcase className="w-6 h-6" />,
+      icon: "💼",
       title: "Find Jobs",
       description: "Discover opportunities locally and beyond",
       color: "bg-gradient-to-br from-blue-100 to-blue-50",
@@ -307,7 +307,7 @@ export default function Home() {
       iconColor: "text-blue-500"
     },
     {
-      icon: <Users className="w-6 h-6" />,
+      icon: "👥",
       title: "Find Talent",
       description: "Connect with skilled professionals worldwide",
       color: "bg-gradient-to-br from-purple-100 to-purple-50",
@@ -315,7 +315,7 @@ export default function Home() {
       iconColor: "text-purple-500"
     },
     {
-      icon: <Zap className="w-6 h-6" />,
+      icon: "🚀",
       title: "No Commitment",
       description: "Browse freely, sign up only when needed",
       color: "bg-gradient-to-br from-amber-100 to-amber-50",
@@ -410,7 +410,7 @@ export default function Home() {
                 >
                   <div className={`absolute inset-0 ${feature.color} opacity-30`}></div>
                   <div className="relative">
-                    <div className={`w-12 h-12 rounded-xl ${feature.color} border ${feature.borderColor} flex items-center justify-center mb-4 ${feature.iconColor}`}>
+                    <div className={`w-12 h-12 rounded-xl ${feature.color} border ${feature.borderColor} flex items-center justify-center text-xl mb-4`}>
                       {feature.icon}
                     </div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-2">{feature.title}</h3>
@@ -796,5 +796,23 @@ export default function Home() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="text-center">
+          <div className="relative mx-auto mb-4">
+            <div className="w-12 h-12 border-3 border-blue-200 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-12 h-12 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <p className="text-sm text-gray-600 font-medium">Loading NguvuHire...</p>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

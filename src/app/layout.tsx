@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -13,11 +13,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#6366F1",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "NguvuHire - Find Jobs & Talent Across Africa",
   description: "Connect job seekers and employers across Africa and beyond",
   manifest: "/manifest.json",
-  themeColor: "#6366F1",
   keywords: "jobs, africa, employment, hiring, talent, recruitment",
   appleWebApp: {
     capable: true,
@@ -44,7 +49,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         
         {/* PWA Meta Tags */}
