@@ -3,27 +3,27 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/context/ThemeContext";
-import { Eye, EyeOff } from "lucide-react"; // Import eye icons
+import { Eye, EyeOff } from "lucide-react"; 
 
 export default function AdminLockPage() {
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // New state for visibility
+  const [showPassword, setShowPassword] = useState(false); 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { darkMode } = useTheme();
 
-  // 🔐 CHANGE THIS PASSWORD TO SOMETHING SECURE!
-  const ADMIN_PASSWORD = "nguvuhire2024"; // Change this to your preferred password
+  
+  const ADMIN_PASSWORD = "0751101662.Com"; 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Simple password check
+    
     if (password === ADMIN_PASSWORD) {
-      // Store authentication in sessionStorage (clears when browser closes)
+      
       sessionStorage.setItem("admin_authenticated", "true");
       router.push("/admin/ads");
     } else {

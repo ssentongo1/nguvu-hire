@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
@@ -89,7 +89,8 @@ type HireModalProps = {
   onConfirm: (message: string, contactInfo: string) => void;
 };
 
-function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
+// Memoized Hire Modal Component
+const HireModal = memo(function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
   const { darkMode } = useTheme();
   const [message, setMessage] = useState(`Hello ${availability.name}! I'm interested in hiring you for the ${availability.desired_job} position. Let's connect!`);
   const [contactInfo, setContactInfo] = useState("");
@@ -204,10 +205,20 @@ function HireModal({ availability, onClose, onConfirm }: HireModalProps) {
       </div>
     </div>
   );
-}
+});
 
-// Optimized Image Component
-function OptimizedImage({ src, alt, className, onClick }: { src: string; alt: string; className: string; onClick?: () => void }) {
+// Memoized Optimized Image Component
+const OptimizedImage = memo(function OptimizedImage({ 
+  src, 
+  alt, 
+  className, 
+  onClick 
+}: { 
+  src: string; 
+  alt: string; 
+  className: string; 
+  onClick?: () => void 
+}) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -238,10 +249,28 @@ function OptimizedImage({ src, alt, className, onClick }: { src: string; alt: st
             setImageLoaded(true);
           }}
           loading="lazy"
+          decoding="async"
         />
       )}
     </div>
   );
+});
+
+// Debounce hook for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 
 export default function DashboardPage() {
@@ -279,10 +308,13 @@ export default function DashboardPage() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 12; // 12 posts + 3 ads = 15 total cards per page
+  const postsPerPage = 12;
 
   // Real ad placements from database
   const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
+
+  // Debounced search values
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Text color utilities
   const textMuted = darkMode ? "text-gray-300" : "text-gray-600";
@@ -290,50 +322,50 @@ export default function DashboardPage() {
   const textSecondary = darkMode ? "text-gray-200" : "text-gray-700";
 
   // Determine user type based on their profile or role
-  const userType = profile?.role === "employer" ? 'employer' : 'job_seeker';
+  const userType = useMemo(() => profile?.role === "employer" ? 'employer' : 'job_seeker', [profile?.role]);
 
   // Get user's country code from profile country name
-  const getUserCountryCode = () => {
+  const getUserCountryCode = useCallback(() => {
     if (!profile?.country) return "";
     const country = countries.find(c => 
       c.name.toLowerCase() === profile.country?.toLowerCase() || 
       c.code.toLowerCase() === profile.country?.toLowerCase()
     );
     return country?.code || "";
-  };
+  }, [profile?.country]);
 
   // Set default tab based on user role when profile loads
   useEffect(() => {
     if (profile?.role === "employer") {
-      setActiveTab("talent"); // Employers see talent by default
+      setActiveTab("talent");
     } else if (profile?.role === "job_seeker") {
-      setActiveTab("jobs"); // Job seekers see jobs by default
+      setActiveTab("jobs");
     }
-    // Guest users remain on "jobs" tab (default state)
   }, [profile?.role]);
 
   // Calculate pagination values
-  const isEmployer = profile?.role === "employer";
+  const isEmployer = useMemo(() => profile?.role === "employer", [profile?.role]);
   
   // Determine which items to display based on active tab
-  const getDisplayItems = () => {
+  const displayItems = useMemo(() => {
     if (activeTab === "jobs") {
-      return isEmployer ? [] : jobs; // Employers don't see jobs in jobs tab
+      return isEmployer ? [] : jobs;
     } else if (activeTab === "talent") {
-      return isEmployer ? availabilities : []; // Job seekers don't see talent in talent tab
+      return isEmployer ? availabilities : [];
     }
-    return []; // Services tab empty for now
-  };
-
-  const displayItems = getDisplayItems();
+    return [];
+  }, [activeTab, isEmployer, jobs, availabilities]);
   
   // Calculate total pages based on actual posts (not including ads in count)
-  const totalPages = Math.ceil(displayItems.length / postsPerPage);
+  const totalPages = useMemo(() => Math.ceil(displayItems.length / postsPerPage), [displayItems.length]);
 
   // Get current posts for the page
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = displayItems.slice(indexOfFirstPost, indexOfLastPost);
+  const indexOfLastPost = useMemo(() => currentPage * postsPerPage, [currentPage]);
+  const indexOfFirstPost = useMemo(() => indexOfLastPost - postsPerPage, [indexOfLastPost]);
+  const currentPosts = useMemo(() => 
+    displayItems.slice(indexOfFirstPost, indexOfLastPost), 
+    [displayItems, indexOfFirstPost, indexOfLastPost]
+  );
 
   // Auto-detect user's country and set filters
   useEffect(() => {
@@ -344,31 +376,224 @@ export default function DashboardPage() {
         setToCountry(userCountryCode);
       }
     }
-  }, [profile, fromCountry, toCountry]);
+  }, [profile, fromCountry, toCountry, getUserCountryCode]);
 
   // Reset to page 1 when posts change
   useEffect(() => {
     setCurrentPage(1);
   }, [displayItems.length]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Current state:", {
-      profile,
-      jobsCount: jobs.length,
-      availabilitiesCount: availabilities.length,
-      userType,
-      loadingPosts,
-      initialLoading,
-      userCountry: profile?.country,
-      fromCountry,
-      toCountry,
-      currentPage,
-      totalPages,
-      currentPostsCount: currentPosts.length,
-      activeTab
-    });
-  }, [profile, jobs, availabilities, userType, loadingPosts, initialLoading, fromCountry, toCountry, currentPage, totalPages, currentPosts, activeTab]);
+  // Optimized fetchPosts function with parallel data fetching
+  const fetchPosts = useCallback(async () => {
+    setLoadingPosts(true);
+    try {
+      const role = profile?.role;
+      
+      if (role === "employer") {
+        // Fetch availabilities and profiles in parallel
+        const [availabilitiesPromise, profilesPromise] = await Promise.all([
+          supabase
+            .from("availabilities")
+            .select("*")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, is_verified")
+            .in("role", ["job_seeker"])
+        ]);
+
+        const { data: availabilitiesData, error: availabilitiesError } = availabilitiesPromise;
+        const { data: profilesData } = profilesPromise;
+
+        if (availabilitiesError) throw availabilitiesError;
+
+        // Create profile map for quick lookup
+        const profilesMap = new Map<string, any>();
+        profilesData?.forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+
+        // Fetch all boost data in bulk
+        const { data: boostData } = await supabase
+          .from("boosted_posts")
+          .select("*")
+          .eq("post_type", "availability")
+          .in("post_id", availabilitiesData?.map(a => a.id) || []);
+
+        // Create boost map for quick lookup
+        const boostMap = new Map<string, any>();
+        boostData?.forEach(boost => {
+          boostMap.set(boost.post_id, boost);
+        });
+
+        // Enrich availabilities data
+        const enrichedAvailabilities = availabilitiesData?.map(availability => ({
+          ...availability,
+          profiles: profilesMap.get(availability.created_by) || null,
+          boosted_posts: boostMap.get(availability.id) ? [boostMap.get(availability.id)] : []
+        })) || [];
+
+        // Sort by verification status
+        const sortedAvailabilities = enrichedAvailabilities.sort((a, b) => {
+          const aVerified = a.profiles?.is_verified ? 1 : 0;
+          const bVerified = b.profiles?.is_verified ? 1 : 0;
+          return bVerified - aVerified;
+        });
+
+        setAvailabilities(sortedAvailabilities);
+        
+        // Also fetch jobs in parallel
+        const [jobsPromise, employerProfilesPromise] = await Promise.all([
+          supabase
+            .from("jobs")
+            .select("*")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, company_name, is_verified")
+            .in("role", ["employer"])
+        ]);
+
+        const { data: jobsData } = jobsPromise;
+        const { data: employerProfilesData } = employerProfilesPromise;
+
+        const employerProfilesMap = new Map<string, any>();
+        employerProfilesData?.forEach(profile => {
+          employerProfilesMap.set(profile.id, profile);
+        });
+
+        // Fetch job boost data in bulk
+        const { data: jobBoostData } = await supabase
+          .from("boosted_posts")
+          .select("*")
+          .eq("post_type", "job")
+          .in("post_id", jobsData?.map(j => j.id) || []);
+
+        const jobBoostMap = new Map<string, any>();
+        jobBoostData?.forEach(boost => {
+          jobBoostMap.set(boost.post_id, boost);
+        });
+
+        const enrichedJobs = jobsData?.map(job => ({
+          ...job,
+          profiles: employerProfilesMap.get(job.created_by) || null,
+          boosted_posts: jobBoostMap.get(job.id) ? [jobBoostMap.get(job.id)] : []
+        })) || [];
+
+        const sortedJobs = enrichedJobs.sort((a, b) => {
+          const aVerified = a.profiles?.is_verified ? 1 : 0;
+          const bVerified = b.profiles?.is_verified ? 1 : 0;
+          return bVerified - aVerified;
+        });
+
+        setJobs(sortedJobs);
+      } else {
+        // Fetch jobs and profiles in parallel
+        const [jobsPromise, profilesPromise] = await Promise.all([
+          supabase
+            .from("jobs")
+            .select("*")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, company_name, is_verified")
+            .in("role", ["employer"])
+        ]);
+
+        const { data: jobsData, error: jobsError } = jobsPromise;
+        const { data: profilesData } = profilesPromise;
+
+        if (jobsError) throw jobsError;
+
+        // Create profile map for quick lookup
+        const profilesMap = new Map<string, any>();
+        profilesData?.forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+
+        // Fetch all boost data in bulk
+        const { data: boostData } = await supabase
+          .from("boosted_posts")
+          .select("*")
+          .eq("post_type", "job")
+          .in("post_id", jobsData?.map(j => j.id) || []);
+
+        // Create boost map for quick lookup
+        const boostMap = new Map<string, any>();
+        boostData?.forEach(boost => {
+          boostMap.set(boost.post_id, boost);
+        });
+
+        // Enrich jobs data
+        const enrichedJobs = jobsData?.map(job => ({
+          ...job,
+          profiles: profilesMap.get(job.created_by) || null,
+          boosted_posts: boostMap.get(job.id) ? [boostMap.get(job.id)] : []
+        })) || [];
+
+        // Sort by verification status
+        const sortedJobs = enrichedJobs.sort((a, b) => {
+          const aVerified = a.profiles?.is_verified ? 1 : 0;
+          const bVerified = b.profiles?.is_verified ? 1 : 0;
+          return bVerified - aVerified;
+        });
+
+        setJobs(sortedJobs);
+        
+        // Also fetch availabilities in parallel
+        const [availabilitiesPromise, jobSeekerProfilesPromise] = await Promise.all([
+          supabase
+            .from("availabilities")
+            .select("*")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, is_verified")
+            .in("role", ["job_seeker"])
+        ]);
+
+        const { data: availabilitiesData } = availabilitiesPromise;
+        const { data: jobSeekerProfilesData } = jobSeekerProfilesPromise;
+
+        const jobSeekerProfilesMap = new Map<string, any>();
+        jobSeekerProfilesData?.forEach(profile => {
+          jobSeekerProfilesMap.set(profile.id, profile);
+        });
+
+        // Fetch availability boost data in bulk
+        const { data: availabilityBoostData } = await supabase
+          .from("boosted_posts")
+          .select("*")
+          .eq("post_type", "availability")
+          .in("post_id", availabilitiesData?.map(a => a.id) || []);
+
+        const availabilityBoostMap = new Map<string, any>();
+        availabilityBoostData?.forEach(boost => {
+          availabilityBoostMap.set(boost.post_id, boost);
+        });
+
+        const enrichedAvailabilities = availabilitiesData?.map(availability => ({
+          ...availability,
+          profiles: jobSeekerProfilesMap.get(availability.created_by) || null,
+          boosted_posts: availabilityBoostMap.get(availability.id) ? [availabilityBoostMap.get(availability.id)] : []
+        })) || [];
+
+        const sortedAvailabilities = enrichedAvailabilities.sort((a, b) => {
+          const aVerified = a.profiles?.is_verified ? 1 : 0;
+          const bVerified = b.profiles?.is_verified ? 1 : 0;
+          return bVerified - aVerified;
+        });
+
+        setAvailabilities(sortedAvailabilities);
+      }
+    } catch (err) {
+      console.error("Error loading posts:", err);
+      setJobs([]);
+      setAvailabilities([]);
+    } finally {
+      setLoadingPosts(false);
+    }
+  }, [profile?.role]);
 
   // Fetch profile and posts on load
   useEffect(() => {
@@ -393,7 +618,7 @@ export default function DashboardPage() {
         setProfile(data ?? null);
         
         if (data) {
-          await fetchPosts(data.role);
+          await fetchPosts();
         }
       } catch (err) {
         console.error("Error loading profile:", err);
@@ -403,210 +628,7 @@ export default function DashboardPage() {
     };
 
     loadProfile();
-  }, []);
-
-  // FIXED: FETCH POSTS WITH VERIFICATION PRIORITY - SIMPLIFIED QUERIES
-  const fetchPosts = async (userRole?: string) => {
-    setLoadingPosts(true);
-    try {
-      const role = userRole || profile?.role;
-      
-      console.log("Fetching posts for role:", role);
-      
-      if (role === "employer") {
-        // FIXED: Get availabilities with profile data
-        const { data: availabilitiesData, error: availabilitiesError } = await supabase
-          .from("availabilities")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (availabilitiesError) {
-          console.error("Error fetching availabilities:", availabilitiesError);
-          throw availabilitiesError;
-        }
-
-        // Enrich with profile and boost data
-        if (availabilitiesData && availabilitiesData.length > 0) {
-          const enrichedAvailabilities = await Promise.all(
-            availabilitiesData.map(async (availability) => {
-              // Get profile data
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, is_verified")
-                .eq("id", availability.created_by)
-                .single();
-              
-              // Get boost data
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", availability.id)
-                .eq("post_type", "availability")
-                .single();
-
-              return {
-                ...availability,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
-
-          // Sort by verification status
-          const sortedAvailabilities = enrichedAvailabilities.sort((a, b) => {
-            const aVerified = a.profiles?.is_verified ? 1 : 0;
-            const bVerified = b.profiles?.is_verified ? 1 : 0;
-            return bVerified - aVerified;
-          });
-
-          setAvailabilities(sortedAvailabilities);
-        } else {
-          setAvailabilities([]);
-        }
-        
-        // Also fetch jobs for the jobs tab
-        const { data: jobsData, error: jobsError } = await supabase
-          .from("jobs")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (jobsError) {
-          console.error("Error fetching jobs:", jobsError);
-        } else if (jobsData) {
-          const enrichedJobs = await Promise.all(
-            jobsData.map(async (job) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, company_name, is_verified")
-                .eq("id", job.created_by)
-                .single();
-              
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", job.id)
-                .eq("post_type", "job")
-                .single();
-
-              return {
-                ...job,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
-
-          // Sort by verification status
-          const sortedJobs = enrichedJobs.sort((a, b) => {
-            const aVerified = a.profiles?.is_verified ? 1 : 0;
-            const bVerified = b.profiles?.is_verified ? 1 : 0;
-            return bVerified - aVerified;
-          });
-
-          setJobs(sortedJobs);
-        }
-      } else {
-        // FIXED: Get jobs with profile data
-        const { data: jobsData, error: jobsError } = await supabase
-          .from("jobs")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (jobsError) {
-          console.error("Error fetching jobs:", jobsError);
-          throw jobsError;
-        }
-
-        // Enrich with profile and boost data
-        if (jobsData && jobsData.length > 0) {
-          const enrichedJobs = await Promise.all(
-            jobsData.map(async (job) => {
-              // Get profile data
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, company_name, is_verified")
-                .eq("id", job.created_by)
-                .single();
-              
-              // Get boost data
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", job.id)
-                .eq("post_type", "job")
-                .single();
-
-              return {
-                ...job,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
-
-          // Sort by verification status
-          const sortedJobs = enrichedJobs.sort((a, b) => {
-            const aVerified = a.profiles?.is_verified ? 1 : 0;
-            const bVerified = b.profiles?.is_verified ? 1 : 0;
-            return bVerified - aVerified;
-          });
-
-          setJobs(sortedJobs);
-        } else {
-          setJobs([]);
-        }
-        
-        // Also fetch availabilities for the talent tab
-        const { data: availabilitiesData, error: availabilitiesError } = await supabase
-          .from("availabilities")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (availabilitiesError) {
-          console.error("Error fetching availabilities:", availabilitiesError);
-        } else if (availabilitiesData) {
-          const enrichedAvailabilities = await Promise.all(
-            availabilitiesData.map(async (availability) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, is_verified")
-                .eq("id", availability.created_by)
-                .single();
-              
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", availability.id)
-                .eq("post_type", "availability")
-                .single();
-
-              return {
-                ...availability,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
-
-          // Sort by verification status
-          const sortedAvailabilities = enrichedAvailabilities.sort((a, b) => {
-            const aVerified = a.profiles?.is_verified ? 1 : 0;
-            const bVerified = b.profiles?.is_verified ? 1 : 0;
-            return bVerified - aVerified;
-          });
-
-          setAvailabilities(sortedAvailabilities);
-        }
-      }
-    } catch (err) {
-      console.error("Error loading posts:", err);
-      // Set empty arrays on error to prevent infinite loading
-      setJobs([]);
-      setAvailabilities([]);
-    } finally {
-      setLoadingPosts(false);
-    }
-  };
+  }, [fetchPosts]);
 
   // Fetch real ads from database
   useEffect(() => {
@@ -640,7 +662,7 @@ export default function DashboardPage() {
   }, []);
 
   // Function to get display name based on user type
-  const getDisplayName = () => {
+  const getDisplayName = useCallback(() => {
     if (!profile) return "User";
     
     if (profile.role === "job_seeker") {
@@ -659,10 +681,10 @@ export default function DashboardPage() {
     }
     
     return "User";
-  };
+  }, [profile]);
 
   // Check both profile_picture and profile_picture_url
-  const profileImageSrc = (profile: any) => {
+  const profileImageSrc = useCallback((profile: any) => {
     if (!profile) return null;
     
     const imagePath = profile.profile_picture_url || profile.profile_picture;
@@ -671,40 +693,40 @@ export default function DashboardPage() {
     if (imagePath.startsWith("http")) return imagePath;
     
     return supabase.storage.from("profile-pictures").getPublicUrl(imagePath).data?.publicUrl ?? null;
-  };
+  }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
     router.push("/");
-  };
+  }, [router]);
 
-  const handlePost = () => {
+  const handlePost = useCallback(() => {
     if (profile?.role === "employer") {
       router.push("/post-job");
     } else {
       router.push("/post-availability");
     }
-  };
+  }, [profile?.role, router]);
 
-  const handleViewApplications = () => {
+  const handleViewApplications = useCallback(() => {
     router.push("/employer/applications");
-  };
+  }, [router]);
 
-  const handleViewHireRequests = () => {
+  const handleViewHireRequests = useCallback(() => {
     router.push("/hire-requests");
-  };
+  }, [router]);
 
   // ADD THIS FUNCTION: Handle navigation to pricing page with correct user type
-  const handleViewPricing = () => {
+  const handleViewPricing = useCallback(() => {
     router.push(`/pricing?type=${userType}`);
-  };
+  }, [router, userType]);
 
   // ADD THIS FUNCTION: Handle navigation to verification page - FIXED TO GO TO VERIFICATION TAB
-  const handleGetVerified = () => {
+  const handleGetVerified = useCallback(() => {
     router.push(`/pricing?type=${userType}&verify=true`);
-  };
+  }, [router, userType]);
 
-  const handleDeleteJob = async (id: string) => {
+  const handleDeleteJob = useCallback(async (id: string) => {
     if (!confirm("Are you sure you want to delete this post?")) return;
     try {
       const { error } = await supabase.from("jobs").delete().eq("id", id);
@@ -714,9 +736,9 @@ export default function DashboardPage() {
       console.error("Error deleting job:", err);
       alert("Failed to delete job");
     }
-  };
+  }, []);
 
-  const handleDeleteAvailability = async (id: string) => {
+  const handleDeleteAvailability = useCallback(async (id: string) => {
     if (!confirm("Are you sure you want to delete this availability post?")) return;
     try {
       const { error } = await supabase.from("availabilities").delete().eq("id", id);
@@ -726,20 +748,20 @@ export default function DashboardPage() {
       console.error("Error deleting availability:", err);
       alert("Failed to delete availability post");
     }
-  };
+  }, []);
 
   // Handle View Profile navigation
-  const handleViewProfile = (userId: string) => {
+  const handleViewProfile = useCallback((userId: string) => {
     router.push(`/profile/${userId}`);
-  };
+  }, [router]);
 
   // Hire function for employers
-  const handleHireClick = (availability: Availability) => {
+  const handleHireClick = useCallback((availability: Availability) => {
     setSelectedAvailabilityForHire(availability);
     setShowHireModal(true);
-  };
+  }, []);
 
-  const handleHireConfirm = async (message: string, contactInfo: string) => {
+  const handleHireConfirm = useCallback(async (message: string, contactInfo: string) => {
     if (!profile || !selectedAvailabilityForHire) return;
     
     if (profile.role !== "employer") {
@@ -786,9 +808,9 @@ export default function DashboardPage() {
       console.error("Error hiring candidate:", error);
       alert("Failed to send hire request: " + error.message);
     }
-  };
+  }, [profile, selectedAvailabilityForHire]);
 
-  const sendHireNotification = async (availability: Availability, hireId: string) => {
+  const sendHireNotification = useCallback(async (availability: Availability, hireId: string) => {
     try {
       const employerName = profile?.company_name || `${profile?.first_name} ${profile?.last_name}` || 'An employer';
       
@@ -812,47 +834,53 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error sending hire notification:', error);
     }
-  };
+  }, [profile]);
 
-  // FIXED: Search functions with verification priority
-  const handleSearch = async () => {
+  // Optimized search function with bulk profile fetching
+  const handleSearch = useCallback(async () => {
     setLoadingResults(true);
     try {
       if (profile?.role === "employer") {
         const { data, error } = await supabase
           .from("availabilities")
           .select("*")
-          .or(`desired_job.ilike.%${searchQuery}%,skills.ilike.%${searchQuery}%,name.ilike.%${searchQuery}%`)
+          .or(`desired_job.ilike.%${debouncedSearchQuery}%,skills.ilike.%${debouncedSearchQuery}%,name.ilike.%${debouncedSearchQuery}%`)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
         
-        // Enrich with profile and boost data, then sort by verification
         if (data) {
-          const enrichedData = await Promise.all(
-            data.map(async (availability) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, is_verified")
-                .eq("id", availability.created_by)
-                .single();
-              
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", availability.id)
-                .eq("post_type", "availability")
-                .single();
+          // Fetch profiles in bulk
+          const userIds = [...new Set(data.map(d => d.created_by))];
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, is_verified")
+            .in("id", userIds);
 
-              return {
-                ...availability,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
+          const profilesMap = new Map<string, any>();
+          profilesData?.forEach(profile => {
+            profilesMap.set(profile.id, profile);
+          });
 
-          // Sort by verification status
+          // Fetch boosts in bulk
+          const postIds = data.map(d => d.id);
+          const { data: boostData } = await supabase
+            .from("boosted_posts")
+            .select("*")
+            .eq("post_type", "availability")
+            .in("post_id", postIds);
+
+          const boostMap = new Map<string, any>();
+          boostData?.forEach(boost => {
+            boostMap.set(boost.post_id, boost);
+          });
+
+          const enrichedData = data.map(availability => ({
+            ...availability,
+            profiles: profilesMap.get(availability.created_by) || null,
+            boosted_posts: boostMap.get(availability.id) ? [boostMap.get(availability.id)] : []
+          }));
+
           const sortedData = enrichedData.sort((a, b) => {
             const aVerified = a.profiles?.is_verified ? 1 : 0;
             const bVerified = b.profiles?.is_verified ? 1 : 0;
@@ -865,37 +893,43 @@ export default function DashboardPage() {
         const { data, error } = await supabase
           .from("jobs")
           .select("*")
-          .ilike("title", `%${searchQuery}%`)
+          .ilike("title", `%${debouncedSearchQuery}%`)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
         
-        // Enrich with profile and boost data, then sort by verification
         if (data) {
-          const enrichedData = await Promise.all(
-            data.map(async (job) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, company_name, is_verified")
-                .eq("id", job.created_by)
-                .single();
-              
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", job.id)
-                .eq("post_type", "job")
-                .single();
+          // Fetch profiles in bulk
+          const userIds = [...new Set(data.map(d => d.created_by))];
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, company_name, is_verified")
+            .in("id", userIds);
 
-              return {
-                ...job,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
+          const profilesMap = new Map<string, any>();
+          profilesData?.forEach(profile => {
+            profilesMap.set(profile.id, profile);
+          });
 
-          // Sort by verification status
+          // Fetch boosts in bulk
+          const postIds = data.map(d => d.id);
+          const { data: boostData } = await supabase
+            .from("boosted_posts")
+            .select("*")
+            .eq("post_type", "job")
+            .in("post_id", postIds);
+
+          const boostMap = new Map<string, any>();
+          boostData?.forEach(boost => {
+            boostMap.set(boost.post_id, boost);
+          });
+
+          const enrichedData = data.map(job => ({
+            ...job,
+            profiles: profilesMap.get(job.created_by) || null,
+            boosted_posts: boostMap.get(job.id) ? [boostMap.get(job.id)] : []
+          }));
+
           const sortedData = enrichedData.sort((a, b) => {
             const aVerified = a.profiles?.is_verified ? 1 : 0;
             const bVerified = b.profiles?.is_verified ? 1 : 0;
@@ -910,10 +944,17 @@ export default function DashboardPage() {
     } finally {
       setLoadingResults(false);
     }
-  };
+  }, [profile?.role, debouncedSearchQuery]);
 
-  // FIXED: Location-Based Search Function with Verification Priority
-  const handleRegionSearch = async () => {
+  // Search when debounced query changes
+  useEffect(() => {
+    if (debouncedSearchQuery) {
+      handleSearch();
+    }
+  }, [debouncedSearchQuery, handleSearch]);
+
+  // Optimized location-based search with bulk fetching
+  const handleRegionSearch = useCallback(async () => {
     setLoadingRegionResults(true);
     try {
       if (profile?.role === "employer") {
@@ -924,7 +965,6 @@ export default function DashboardPage() {
         if (fromCountry) {
           const countryObj = countries.find(c => c.code === fromCountry);
           if (countryObj) {
-            // Search in country field for candidates FROM that country
             query = query.ilike("country", `%${countryObj.name}%`);
           }
         }
@@ -933,7 +973,6 @@ export default function DashboardPage() {
         if (toCountry) {
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
-            // Search in location field for willingness to work there
             query = query.or(`location.ilike.%${countryObj.name}%,description.ilike.%${countryObj.name}%`);
           }
         }
@@ -941,32 +980,38 @@ export default function DashboardPage() {
         const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
 
-        // Enrich with profile and boost data, then sort by verification
         if (data) {
-          const enrichedData = await Promise.all(
-            data.map(async (availability) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, is_verified")
-                .eq("id", availability.created_by)
-                .single();
-              
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", availability.id)
-                .eq("post_type", "availability")
-                .single();
+          // Bulk fetch profiles
+          const userIds = [...new Set(data.map(d => d.created_by))];
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, is_verified")
+            .in("id", userIds);
 
-              return {
-                ...availability,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
+          const profilesMap = new Map<string, any>();
+          profilesData?.forEach(profile => {
+            profilesMap.set(profile.id, profile);
+          });
 
-          // Sort by verification status
+          // Bulk fetch boosts
+          const postIds = data.map(d => d.id);
+          const { data: boostData } = await supabase
+            .from("boosted_posts")
+            .select("*")
+            .eq("post_type", "availability")
+            .in("post_id", postIds);
+
+          const boostMap = new Map<string, any>();
+          boostData?.forEach(boost => {
+            boostMap.set(boost.post_id, boost);
+          });
+
+          const enrichedData = data.map(availability => ({
+            ...availability,
+            profiles: profilesMap.get(availability.created_by) || null,
+            boosted_posts: boostMap.get(availability.id) ? [boostMap.get(availability.id)] : []
+          }));
+
           const sortedData = enrichedData.sort((a, b) => {
             const aVerified = a.profiles?.is_verified ? 1 : 0;
             const bVerified = b.profiles?.is_verified ? 1 : 0;
@@ -983,7 +1028,6 @@ export default function DashboardPage() {
         if (fromCountry) {
           const countryObj = countries.find(c => c.code === fromCountry);
           if (countryObj) {
-            // Jobs that prefer candidates FROM this country
             query = query.contains("preferred_candidate_countries", [countryObj.code]);
           }
         }
@@ -992,7 +1036,6 @@ export default function DashboardPage() {
         if (toCountry) {
           const countryObj = countries.find(c => c.code === toCountry);
           if (countryObj) {
-            // Jobs located in this country
             query = query.ilike("country", `%${countryObj.name}%`);
           }
         }
@@ -1000,32 +1043,38 @@ export default function DashboardPage() {
         const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
 
-        // Enrich with profile and boost data, then sort by verification
         if (data) {
-          const enrichedData = await Promise.all(
-            data.map(async (job) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, company_name, is_verified")
-                .eq("id", job.created_by)
-                .single();
-              
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", job.id)
-                .eq("post_type", "job")
-                .single();
+          // Bulk fetch profiles
+          const userIds = [...new Set(data.map(d => d.created_by))];
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, company_name, is_verified")
+            .in("id", userIds);
 
-              return {
-                ...job,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
+          const profilesMap = new Map<string, any>();
+          profilesData?.forEach(profile => {
+            profilesMap.set(profile.id, profile);
+          });
 
-          // Sort by verification status
+          // Bulk fetch boosts
+          const postIds = data.map(d => d.id);
+          const { data: boostData } = await supabase
+            .from("boosted_posts")
+            .select("*")
+            .eq("post_type", "job")
+            .in("post_id", postIds);
+
+          const boostMap = new Map<string, any>();
+          boostData?.forEach(boost => {
+            boostMap.set(boost.post_id, boost);
+          });
+
+          const enrichedData = data.map(job => ({
+            ...job,
+            profiles: profilesMap.get(job.created_by) || null,
+            boosted_posts: boostMap.get(job.id) ? [boostMap.get(job.id)] : []
+          }));
+
           const sortedData = enrichedData.sort((a, b) => {
             const aVerified = a.profiles?.is_verified ? 1 : 0;
             const bVerified = b.profiles?.is_verified ? 1 : 0;
@@ -1041,14 +1090,13 @@ export default function DashboardPage() {
     } finally {
       setLoadingRegionResults(false);
     }
-  };
+  }, [profile?.role, fromCountry, toCountry]);
 
-  // FIXED: Show remote jobs/candidates with verification priority
-  const handleShowRemote = async () => {
+  // Optimized remote posts fetching
+  const handleShowRemote = useCallback(async () => {
     setLoadingPosts(true);
     try {
       if (profile?.role === "employer") {
-        // Show job seekers willing to work remotely
         const { data, error } = await supabase
           .from("availabilities")
           .select("*")
@@ -1057,32 +1105,38 @@ export default function DashboardPage() {
 
         if (error) throw error;
         
-        // Enrich with profile and boost data, then sort by verification
         if (data) {
-          const enrichedData = await Promise.all(
-            data.map(async (availability) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, is_verified")
-                .eq("id", availability.created_by)
-                .single();
-              
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", availability.id)
-                .eq("post_type", "availability")
-                .single();
+          // Bulk fetch profiles
+          const userIds = [...new Set(data.map(d => d.created_by))];
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, is_verified")
+            .in("id", userIds);
 
-              return {
-                ...availability,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
+          const profilesMap = new Map<string, any>();
+          profilesData?.forEach(profile => {
+            profilesMap.set(profile.id, profile);
+          });
 
-          // Sort by verification status
+          // Bulk fetch boosts
+          const postIds = data.map(d => d.id);
+          const { data: boostData } = await supabase
+            .from("boosted_posts")
+            .select("*")
+            .eq("post_type", "availability")
+            .in("post_id", postIds);
+
+          const boostMap = new Map<string, any>();
+          boostData?.forEach(boost => {
+            boostMap.set(boost.post_id, boost);
+          });
+
+          const enrichedData = data.map(availability => ({
+            ...availability,
+            profiles: profilesMap.get(availability.created_by) || null,
+            boosted_posts: boostMap.get(availability.id) ? [boostMap.get(availability.id)] : []
+          }));
+
           const sortedData = enrichedData.sort((a, b) => {
             const aVerified = a.profiles?.is_verified ? 1 : 0;
             const bVerified = b.profiles?.is_verified ? 1 : 0;
@@ -1092,7 +1146,6 @@ export default function DashboardPage() {
           setAvailabilities(sortedData);
         }
       } else {
-        // Show remote jobs
         const { data, error } = await supabase
           .from("jobs")
           .select("*")
@@ -1101,32 +1154,38 @@ export default function DashboardPage() {
 
         if (error) throw error;
         
-        // Enrich with profile and boost data, then sort by verification
         if (data) {
-          const enrichedData = await Promise.all(
-            data.map(async (job) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("username, avatar_url, full_name, company_name, is_verified")
-                .eq("id", job.created_by)
-                .single();
-              
-              const { data: boostData } = await supabase
-                .from("boosted_posts")
-                .select("boost_end, is_active")
-                .eq("post_id", job.id)
-                .eq("post_type", "job")
-                .single();
+          // Bulk fetch profiles
+          const userIds = [...new Set(data.map(d => d.created_by))];
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, company_name, is_verified")
+            .in("id", userIds);
 
-              return {
-                ...job,
-                profiles: profileData || null,
-                boosted_posts: boostData ? [boostData] : []
-              };
-            })
-          );
+          const profilesMap = new Map<string, any>();
+          profilesData?.forEach(profile => {
+            profilesMap.set(profile.id, profile);
+          });
 
-          // Sort by verification status
+          // Bulk fetch boosts
+          const postIds = data.map(d => d.id);
+          const { data: boostData } = await supabase
+            .from("boosted_posts")
+            .select("*")
+            .eq("post_type", "job")
+            .in("post_id", postIds);
+
+          const boostMap = new Map<string, any>();
+          boostData?.forEach(boost => {
+            boostMap.set(boost.post_id, boost);
+          });
+
+          const enrichedData = data.map(job => ({
+            ...job,
+            profiles: profilesMap.get(job.created_by) || null,
+            boosted_posts: boostMap.get(job.id) ? [boostMap.get(job.id)] : []
+          }));
+
           const sortedData = enrichedData.sort((a, b) => {
             const aVerified = a.profiles?.is_verified ? 1 : 0;
             const bVerified = b.profiles?.is_verified ? 1 : 0;
@@ -1142,10 +1201,10 @@ export default function DashboardPage() {
     } finally {
       setLoadingPosts(false);
     }
-  };
+  }, [profile?.role]);
 
-  // FIXED: Show local jobs/candidates with verification priority
-  const handleShowLocal = async () => {
+  // Optimized local posts fetching
+  const handleShowLocal = useCallback(() => {
     const userCountryCode = getUserCountryCode();
     if (userCountryCode) {
       // Set both filters to user's country
@@ -1159,37 +1218,31 @@ export default function DashboardPage() {
     } else {
       alert("Please set your country in your profile to use this feature");
     }
-  };
-
-  // FIXED: Wrapper function for fetchPosts that doesn't take parameters
-  const handleShowAll = () => {
-    fetchPosts();
-  };
+  }, [getUserCountryCode, handleRegionSearch]);
 
   // Handle page change
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
   // Open modals
-  const openJobModal = (job: Job) => {
+  const openJobModal = useCallback((job: Job) => {
     setSelectedJob(job);
     setModalReadOnly(true);
-  };
+  }, []);
 
-  const openAvailabilityModal = (availability: Availability) => {
+  const openAvailabilityModal = useCallback((availability: Availability) => {
     setSelectedAvailability(availability);
     setModalReadOnly(true);
-  };
+  }, []);
 
-  const openAdModal = (ad: AdPlacement) => {
+  const openAdModal = useCallback((ad: AdPlacement) => {
     setSelectedAd(ad);
-  };
+  }, []);
 
   // Determine what to display based on user role and active tab
-  const getNoPostsMessage = () => {
+  const getNoPostsMessage = useCallback(() => {
     if (activeTab === "jobs") {
       return isEmployer ? "Switch to Job Seeker account to view jobs" : "No jobs found";
     } else if (activeTab === "talent") {
@@ -1197,10 +1250,10 @@ export default function DashboardPage() {
     } else {
       return "Services coming soon";
     }
-  };
+  }, [activeTab, isEmployer]);
 
-  // Function to render ad placements with same styling as JobCard
-  const renderAdPlacement = (ad: AdPlacement) => (
+  // Function to render ad placements
+  const renderAdPlacement = useCallback((ad: AdPlacement) => (
     <div
       key={ad.id}
       className="relative bg-white/10 dark:bg-white/5 rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col border-2 border-dashed border-yellow-400"
@@ -1261,20 +1314,10 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  );
+  ), [openAdModal, textPrimary, textMuted]);
 
-  // Function to render posts with ads inserted after every 9 posts (3 rows) - RESTORED YOUR ORIGINAL LOGIC
-  const renderPostsWithAds = () => {
-    console.log("Rendering items:", {
-      isEmployer,
-      activeTab,
-      itemsCount: currentPosts.length,
-      jobsCount: jobs.length,
-      availabilitiesCount: availabilities.length,
-      currentPage,
-      totalPages
-    });
-
+  // Memoized function to render posts with ads
+  const renderPostsWithAds = useMemo(() => {
     if (loadingPosts) {
       return (
         <div className="col-span-3 text-center py-8">
@@ -1303,7 +1346,7 @@ export default function DashboardPage() {
           </p>
           {(fromCountry || toCountry) && activeTab !== "services" && (
             <button
-              onClick={handleShowAll}
+              onClick={() => fetchPosts()}
               className="mt-3 px-3 py-1.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
             >
               Show All
@@ -1315,7 +1358,6 @@ export default function DashboardPage() {
 
     const elements: React.JSX.Element[] = [];
     
-    // RESTORED: Your original ad placement logic - insert ads after every 9 posts
     currentPosts.forEach((item, index) => {
       if (activeTab === "talent" || (activeTab === "jobs" && isEmployer)) {
         const availability = item as Availability;
@@ -1345,7 +1387,7 @@ export default function DashboardPage() {
         );
       }
 
-      // RESTORED: Insert ads after every 9 posts (your original logic)
+      // Insert ads after every 9 posts
       if ((index + 1) % 9 === 0 && adPlacements.length > 0) {
         adPlacements.forEach((ad) => {
           elements.push(renderAdPlacement(ad));
@@ -1354,9 +1396,28 @@ export default function DashboardPage() {
     });
 
     return elements;
-  };
+  }, [
+    loadingPosts,
+    currentPosts,
+    activeTab,
+    isEmployer,
+    profile?.id,
+    adPlacements,
+    fromCountry,
+    toCountry,
+    textMuted,
+    getNoPostsMessage,
+    fetchPosts,
+    openAvailabilityModal,
+    handleDeleteAvailability,
+    handleHireClick,
+    handleViewProfile,
+    openJobModal,
+    handleDeleteJob,
+    renderAdPlacement
+  ]);
 
-  // Show initial loading screen - FIXED: Use EXACT SAME background as light mode
+  // Show initial loading screen
   if (initialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-900">
@@ -1397,7 +1458,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Profile + Action buttons - MOBILE OPTIMIZED */}
+        {/* Profile + Action buttons */}
         <div className="flex flex-col items-end gap-3">
           <div className="flex items-center gap-2">
             <div className={`text-xs ${textPrimary} hidden sm:block`}>
@@ -1438,7 +1499,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Action buttons - Stack on mobile - UPDATED WITH VERIFICATION BUTTON */}
+          {/* Action buttons */}
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {isEmployer ? (
               <>
@@ -1644,7 +1705,7 @@ export default function DashboardPage() {
               Local
             </button>
             <button
-              onClick={handleShowAll}
+              onClick={() => fetchPosts()}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
                 darkMode 
                   ? "bg-gray-500 text-white hover:bg-gray-600 border border-gray-400"
@@ -1673,16 +1734,6 @@ export default function DashboardPage() {
                     : "bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-blue-400 focus:bg-white border border-gray-200"
                 }`}
               />
-              <button
-                onClick={handleSearch}
-                className={`px-3 py-2 rounded-md text-xs font-medium transition ${
-                  darkMode 
-                    ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
-                    : "bg-blue-500 text-white hover:bg-blue-600 border border-blue-400"
-                }`}
-              >
-                Search
-              </button>
             </div>
           </div>
           
@@ -1796,7 +1847,7 @@ export default function DashboardPage() {
 
       {/* Posts Grid - Clean and simple, only shows posts */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        {renderPostsWithAds()}
+        {renderPostsWithAds}
       </div>
 
       {/* Pagination Component */}

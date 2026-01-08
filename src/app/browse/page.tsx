@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User, Briefcase, Crown, Search, MapPin, X, CheckCircle, Download } from "lucide-react";
@@ -73,8 +73,18 @@ type AdPlacement = {
   link?: string;
 };
 
-// Optimized Image Component
-function OptimizedImage({ src, alt, className, onClick }: { src: string; alt: string; className: string; onClick?: () => void }) {
+// Memoized Image Component
+const OptimizedImage = React.memo(function OptimizedImage({ 
+  src, 
+  alt, 
+  className, 
+  onClick 
+}: { 
+  src: string; 
+  alt: string; 
+  className: string; 
+  onClick?: () => void 
+}) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -105,14 +115,15 @@ function OptimizedImage({ src, alt, className, onClick }: { src: string; alt: st
             setImageLoaded(true);
           }}
           loading="lazy"
+          decoding="async"
         />
       )}
     </div>
   );
-}
+});
 
-// Job Card Component for Public View
-function JobCard({ job, onClick }: { job: Job; onClick: () => void }) {
+// Memoized Job Card Component
+const JobCard = React.memo(function JobCard({ job, onClick }: { job: Job; onClick: () => void }) {
   const isBoosted = job.boosted_posts?.[0]?.is_active;
   const isVerified = job.profiles?.is_verified;
   const companyName = job.profiles?.company_name || job.company || "Company";
@@ -183,10 +194,16 @@ function JobCard({ job, onClick }: { job: Job; onClick: () => void }) {
       </div>
     </div>
   );
-}
+});
 
-// Availability Card Component for Public View
-function AvailabilityCard({ availability, onClick }: { availability: Availability; onClick: () => void }) {
+// Memoized Availability Card Component
+const AvailabilityCard = React.memo(function AvailabilityCard({ 
+  availability, 
+  onClick 
+}: { 
+  availability: Availability; 
+  onClick: () => void 
+}) {
   const isBoosted = availability.boosted_posts?.[0]?.is_active;
   const isVerified = availability.profiles?.is_verified;
   const candidateName = availability.profiles?.full_name || availability.name;
@@ -273,10 +290,10 @@ function AvailabilityCard({ availability, onClick }: { availability: Availabilit
       </div>
     </div>
   );
-}
+});
 
-// Ad Card Component
-function AdCard({ ad, onClick }: { ad: AdPlacement; onClick: () => void }) {
+// Memoized Ad Card Component
+const AdCard = React.memo(function AdCard({ ad, onClick }: { ad: AdPlacement; onClick: () => void }) {
   return (
     <div
       className="relative bg-white/5 rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col border-2 border-dashed border-yellow-400"
@@ -338,9 +355,9 @@ function AdCard({ ad, onClick }: { ad: AdPlacement; onClick: () => void }) {
       </div>
     </div>
   );
-}
+});
 
-// SIMPLE PWA Install Hook that actually works
+// Optimized PWA Install Hook
 function usePWAInstall() {
   const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -373,7 +390,7 @@ function usePWAInstall() {
     };
   }, []);
 
-  const install = () => {
+  const install = useCallback(() => {
     if (!canInstall) {
       // Show mobile instructions
       if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
@@ -386,9 +403,26 @@ function usePWAInstall() {
       return false;
     }
     return true;
-  };
+  }, [canInstall]);
 
   return { install, canInstall, isInstalled };
+}
+
+// Debounce function for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 
 export default function BrowsePage() {
@@ -408,101 +442,143 @@ export default function BrowsePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12;
 
-  // FIXED: Filter data based on search and location - Verified users appear first
-  const filteredJobs = jobs
-    .filter(job => {
-      const matchesSearch = searchQuery === "" || 
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.company?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesLocation = locationFilter === "" || 
-        job.location.toLowerCase().includes(locationFilter.toLowerCase()) ||
-        job.country.toLowerCase().includes(locationFilter.toLowerCase());
-      
-      return matchesSearch && matchesLocation;
-    })
-    // Sort verified users first
-    .sort((a, b) => {
-      const aVerified = a.profiles?.is_verified ? 1 : 0;
-      const bVerified = b.profiles?.is_verified ? 1 : 0;
-      return bVerified - aVerified;
-    });
+  // Debounced search values
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedLocationFilter = useDebounce(locationFilter, 300);
 
-  const filteredAvailabilities = availabilities
-    .filter(availability => {
-      const matchesSearch = searchQuery === "" || 
-        availability.desired_job.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        availability.skills.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        availability.name.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesLocation = locationFilter === "" || 
-        availability.location.toLowerCase().includes(locationFilter.toLowerCase()) ||
-        availability.country.toLowerCase().includes(locationFilter.toLowerCase());
-      
-      return matchesSearch && matchesLocation;
-    })
-    // Sort verified users first
-    .sort((a, b) => {
-      const aVerified = a.profiles?.is_verified ? 1 : 0;
-      const bVerified = b.profiles?.is_verified ? 1 : 0;
-      return bVerified - aVerified;
-    });
+  // Optimized data filtering with useMemo
+  const filteredJobs = useMemo(() => {
+    return jobs
+      .filter(job => {
+        if (debouncedSearchQuery) {
+          const query = debouncedSearchQuery.toLowerCase();
+          return job.title.toLowerCase().includes(query) ||
+                 job.description.toLowerCase().includes(query) ||
+                 job.company?.toLowerCase().includes(query);
+        }
+        return true;
+      })
+      .filter(job => {
+        if (debouncedLocationFilter) {
+          const location = debouncedLocationFilter.toLowerCase();
+          return job.location.toLowerCase().includes(location) ||
+                 job.country.toLowerCase().includes(location);
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const aVerified = a.profiles?.is_verified ? 1 : 0;
+        const bVerified = b.profiles?.is_verified ? 1 : 0;
+        return bVerified - aVerified;
+      });
+  }, [jobs, debouncedSearchQuery, debouncedLocationFilter]);
 
-  // Determine which items to display based on active tab
-  const displayItems = activeTab === "jobs" ? filteredJobs : 
-                      activeTab === "talent" ? filteredAvailabilities : [];
-  
-  // Calculate total pages based on actual posts (not including ads in count)
-  const totalPages = Math.ceil(displayItems.length / postsPerPage);
+  const filteredAvailabilities = useMemo(() => {
+    return availabilities
+      .filter(availability => {
+        if (debouncedSearchQuery) {
+          const query = debouncedSearchQuery.toLowerCase();
+          return availability.desired_job.toLowerCase().includes(query) ||
+                 availability.skills.toLowerCase().includes(query) ||
+                 availability.name.toLowerCase().includes(query);
+        }
+        return true;
+      })
+      .filter(availability => {
+        if (debouncedLocationFilter) {
+          const location = debouncedLocationFilter.toLowerCase();
+          return availability.location.toLowerCase().includes(location) ||
+                 availability.country.toLowerCase().includes(location);
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const aVerified = a.profiles?.is_verified ? 1 : 0;
+        const bVerified = b.profiles?.is_verified ? 1 : 0;
+        return bVerified - aVerified;
+      });
+  }, [availabilities, debouncedSearchQuery, debouncedLocationFilter]);
 
-  // Get current posts for the page
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = displayItems.slice(indexOfFirstPost, indexOfLastPost);
+  // Memoized display items
+  const displayItems = useMemo(() => {
+    return activeTab === "jobs" ? filteredJobs : 
+           activeTab === "talent" ? filteredAvailabilities : [];
+  }, [activeTab, filteredJobs, filteredAvailabilities]);
 
-  const handleInstallClick = () => {
+  // Memoized pagination calculations
+  const totalPages = useMemo(() => Math.ceil(displayItems.length / postsPerPage), [displayItems.length]);
+  const indexOfLastPost = useMemo(() => currentPage * postsPerPage, [currentPage]);
+  const indexOfFirstPost = useMemo(() => indexOfLastPost - postsPerPage, [indexOfLastPost]);
+  const currentPosts = useMemo(() => 
+    displayItems.slice(indexOfFirstPost, indexOfLastPost), 
+    [displayItems, indexOfFirstPost, indexOfLastPost]
+  );
+
+  const handleInstallClick = useCallback(() => {
     const canProceed = install();
     if (canProceed) {
-      // Trigger the browser's native install prompt
       const event = new Event('beforeinstallprompt');
       window.dispatchEvent(event);
     }
-  };
+  }, [install]);
 
-  // FIXED: Fetch public data with verification priority - SIMPLIFIED QUERIES
+  // Optimized data fetching with parallel requests
   useEffect(() => {
     const fetchPublicData = async () => {
       setLoading(true);
       try {
-        // FIXED: Fetch jobs with simple query first
-        const { data: jobsData, error: jobsError } = await supabase
-          .from("jobs")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(100);
+        // Fetch jobs and availabilities in parallel
+        const [jobsPromise, availabilitiesPromise, adsPromise] = await Promise.all([
+          supabase
+            .from("jobs")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(100),
+          supabase
+            .from("availabilities")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(100),
+          supabase
+            .from("ads")
+            .select("*")
+            .eq("is_active", true)
+            .order("created_at", { ascending: false })
+            .limit(3)
+        ]);
+
+        const { data: jobsData, error: jobsError } = jobsPromise;
+        const { data: availabilitiesData, error: availabilitiesError } = availabilitiesPromise;
+        const { data: adsData } = adsPromise;
 
         if (jobsError) throw jobsError;
-
-        // FIXED: Fetch availabilities with simple query first
-        const { data: availabilitiesData, error: availabilitiesError } = await supabase
-          .from("availabilities")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(100);
-
         if (availabilitiesError) throw availabilitiesError;
 
-        // Enrich data with profile and boost information
+        // Fetch all profiles and boosts in parallel
+        const profileIds = new Set<string>();
+        jobsData?.forEach(job => profileIds.add(job.created_by));
+        availabilitiesData?.forEach(avail => profileIds.add(avail.created_by));
+
+        const profilePromises = Array.from(profileIds).map(id =>
+          supabase
+            .from("profiles")
+            .select("id, username, avatar_url, full_name, company_name, is_verified")
+            .eq("id", id)
+            .single()
+        );
+
+        const profilesResult = await Promise.all(profilePromises);
+        const profilesMap = new Map<string, any>();
+        profilesResult.forEach(result => {
+          if (result.data) {
+            profilesMap.set(result.data.id, result.data);
+          }
+        });
+
+        // Enrich jobs data
         const enrichedJobs = await Promise.all(
           (jobsData || []).map(async (job) => {
-            const { data: profileData } = await supabase
-              .from("profiles")
-              .select("username, avatar_url, full_name, company_name, is_verified")
-              .eq("id", job.created_by)
-              .single();
-
-            const { data: boostData } = await supabase
+            const boostData = await supabase
               .from("boosted_posts")
               .select("boost_end, is_active")
               .eq("post_id", job.id)
@@ -511,21 +587,16 @@ export default function BrowsePage() {
 
             return {
               ...job,
-              profiles: profileData || null,
-              boosted_posts: boostData ? [boostData] : []
+              profiles: profilesMap.get(job.created_by) || null,
+              boosted_posts: boostData.data ? [boostData.data] : []
             };
           })
         );
 
+        // Enrich availabilities data
         const enrichedAvailabilities = await Promise.all(
           (availabilitiesData || []).map(async (availability) => {
-            const { data: profileData } = await supabase
-              .from("profiles")
-              .select("username, avatar_url, full_name, is_verified")
-              .eq("id", availability.created_by)
-              .single();
-
-            const { data: boostData } = await supabase
+            const boostData = await supabase
               .from("boosted_posts")
               .select("boost_end, is_active")
               .eq("post_id", availability.id)
@@ -534,8 +605,8 @@ export default function BrowsePage() {
 
             return {
               ...availability,
-              profiles: profileData || null,
-              boosted_posts: boostData ? [boostData] : []
+              profiles: profilesMap.get(availability.created_by) || null,
+              boosted_posts: boostData.data ? [boostData.data] : []
             };
           })
         );
@@ -555,15 +626,6 @@ export default function BrowsePage() {
 
         setJobs(sortedJobs);
         setAvailabilities(sortedAvailabilities);
-
-        // Fetch ads
-        const { data: adsData } = await supabase
-          .from("ads")
-          .select("*")
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(3);
-
         setAdPlacements(adsData?.map(ad => ({
           id: ad.id,
           title: ad.title,
@@ -588,33 +650,32 @@ export default function BrowsePage() {
     setCurrentPage(1);
   }, [displayItems.length, activeTab]);
 
-  const handleSignUpPrompt = (action: string) => {
+  const handleSignUpPrompt = useCallback((action: string) => {
     const confirmed = confirm(`To ${action}, you'll need to create an account. Would you like to sign up now?`);
     if (confirmed) {
       router.push("/?auth=signup");
     }
-  };
+  }, [router]);
 
-  const handleViewDetails = (item: Job | Availability) => {
+  const handleViewDetails = useCallback((item: Job | Availability) => {
     if (activeTab === "jobs") {
       handleSignUpPrompt("view job details and apply");
     } else if (activeTab === "talent") {
       handleSignUpPrompt("view candidate details and hire");
     }
-  };
+  }, [activeTab, handleSignUpPrompt]);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const openAdModal = (ad: AdPlacement) => {
+  const openAdModal = useCallback((ad: AdPlacement) => {
     setSelectedAd(ad);
-  };
+  }, []);
 
-  // Function to render posts with ads inserted after every 9 posts
-  const renderPostsWithAds = () => {
+  // Optimized render posts with ads
+  const renderPostsWithAds = useMemo(() => {
     if (loading) {
       return (
         <div className="col-span-3 text-center py-8">
@@ -673,7 +734,7 @@ export default function BrowsePage() {
             {activeTab === "jobs" ? "No jobs found" : "No talent found"}
           </h3>
           <p className="text-xs text-gray-600 max-w-md mx-auto">
-            {searchQuery || locationFilter 
+            {debouncedSearchQuery || debouncedLocationFilter 
               ? "Try adjusting your search criteria"
               : activeTab === "jobs" 
                 ? "No jobs have been posted yet" 
@@ -692,7 +753,7 @@ export default function BrowsePage() {
         const job = item as Job;
         elements.push(
           <JobCard
-            key={job.id}
+            key={`job-${job.id}`}
             job={job}
             onClick={() => handleViewDetails(job)}
           />
@@ -701,7 +762,7 @@ export default function BrowsePage() {
         const availability = item as Availability;
         elements.push(
           <AvailabilityCard
-            key={availability.id}
+            key={`availability-${availability.id}`}
             availability={availability}
             onClick={() => handleViewDetails(availability)}
           />
@@ -723,7 +784,7 @@ export default function BrowsePage() {
     });
 
     return elements;
-  };
+  }, [loading, activeTab, currentPosts, adPlacements, debouncedSearchQuery, debouncedLocationFilter, router, handleViewDetails, openAdModal]);
 
   if (loading) {
     return (
@@ -876,7 +937,7 @@ export default function BrowsePage() {
 
       {/* Results Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        {renderPostsWithAds()}
+        {renderPostsWithAds}
       </div>
 
       {/* Pagination Component - Only show for jobs and talent tabs */}

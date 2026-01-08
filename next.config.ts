@@ -14,8 +14,23 @@ const nextConfig: NextConfig = {
   output: "standalone",
   
   images: {
-    domains: [],
+    domains: [
+      'tlcrmsoiufiubyfqnstj.supabase.co', // Add your Supabase domain
+    ],
     unoptimized: process.env.NODE_ENV === "development",
+  },
+  
+  // Ensure environment variables are included in the build
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  },
+  
+  // Enable better error messages
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
 };
 

@@ -1,36 +1,36 @@
 {
-  "name": "nguvu-hire",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "dev:turbo": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write ."
-  },
-  "dependencies": {
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/supabase-js": "^2.57.4",
-    "framer-motion": "^12.23.22",
-    "lucide-react": "^0.544.0",
-    "next": "^15.5.3",
-    "next-pwa": "^5.6.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/node-fetch": "^2.6.13",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.1",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.3",
-    "prettier": "^3.3.3",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+    "name":  "nguvu-hire",
+    "version":  "0.1.0",
+    "private":  true,
+    "scripts":  {
+                    "dev":  "next dev",
+                    "dev:turbo":  "next dev --turbopack",
+                    "build":  "next build",
+                    "start":  "next start",
+                    "lint":  "next lint",
+                    "format":  "prettier --write ."
+                },
+    "dependencies":  {
+                         "@supabase/auth-helpers-nextjs":  "^0.10.0",
+                         "@supabase/supabase-js":  "^2.57.4",
+                         "framer-motion":  "^12.23.22",
+                         "lucide-react":  "^0.544.0",
+                         "next":  "^15.5.3",
+                         "next-pwa":  "^5.6.0",
+                         "react":  "^18.3.1",
+                         "react-dom":  "^18.3.1"
+                     },
+    "devDependencies":  {
+                            "@eslint/eslintrc":  "^3",
+                            "@tailwindcss/postcss":  "^4",
+                            "@types/node":  "^20",
+                            "@types/node-fetch":  "^2.6.13",
+                            "@types/react":  "^18.3.1",
+                            "@types/react-dom":  "^18.3.1",
+                            "eslint":  "^9",
+                            "eslint-config-next":  "15.5.3",
+                            "prettier":  "^3.3.3",
+                            "tailwindcss":  "^4",
+                            "typescript":  "^5"
+                        }
 }
