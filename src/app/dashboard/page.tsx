@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { LogOut, User, Briefcase, X, Crown, CheckCircle } from "lucide-react";
+import { LogOut, User, Briefcase, X, Crown, CheckCircle, Search, Filter, Globe, MapPin, Building2, Sparkles } from "lucide-react";
 import JobCard from "./JobCard";
 import JobModal from "./JobModal";
 import AvailabilityCard from "./AvailabilityCard";
@@ -112,43 +112,47 @@ const HireModal = memo(function HireModal({ availability, onClose, onConfirm }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className={`rounded-xl shadow-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto ${
-        darkMode ? "bg-gradient-to-br from-blue-700 via-purple-600 to-purple-800" : "bg-white"
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className={`rounded-2xl shadow-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden ${
+        darkMode ? "bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700" : "bg-white border border-gray-200"
       }`}>
-        <div className={`p-4 sm:p-6 border-b ${darkMode ? "border-purple-500" : "border-gray-200"} sticky top-0 bg-inherit`}>
+        <div className={`p-6 border-b ${darkMode ? "border-gray-700" : "border-gray-100"} sticky top-0 bg-inherit`}>
           <div className="flex justify-between items-center">
-            <h2 className={`text-base sm:text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
-              Hire {availability.name}
-            </h2>
+            <div>
+              <h2 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
+                Hire {availability.name}
+              </h2>
+              <p className={`text-sm mt-1 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                For: <span className="font-medium">{availability.desired_job}</span>
+              </p>
+            </div>
             <button
               onClick={onClose}
-              className={`p-1 sm:p-2 rounded-full transition ${
-                darkMode ? "hover:bg-purple-500" : "hover:bg-gray-200"
+              className={`p-2 rounded-lg transition-all hover:scale-105 ${
+                darkMode 
+                  ? "hover:bg-gray-700 text-gray-400 hover:text-white" 
+                  : "hover:bg-gray-100 text-gray-500 hover:text-gray-700"
               }`}
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
-          <p className={`text-xs mt-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-            For: {availability.desired_job}
-          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-5">
             <div>
-              <label className={`block text-xs font-medium mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+              <label className={`block text-sm font-medium mb-2.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                 Message to Candidate *
               </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={3}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all ${
                   darkMode 
-                    ? "bg-purple-500/20 border-purple-400 text-white placeholder-gray-400" 
-                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                    ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500" 
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500"
                 }`}
                 placeholder="Tell the candidate why you want to hire them..."
                 required
@@ -156,35 +160,35 @@ const HireModal = memo(function HireModal({ availability, onClose, onConfirm }: 
             </div>
 
             <div>
-              <label className={`block text-xs font-medium mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+              <label className={`block text-sm font-medium mb-2.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                 Your Contact Information *
               </label>
               <textarea
                 value={contactInfo}
                 onChange={(e) => setContactInfo(e.target.value)}
                 rows={2}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all ${
                   darkMode 
-                    ? "bg-purple-500/20 border-purple-400 text-white placeholder-gray-400" 
-                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                    ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500" 
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500"
                 }`}
                 placeholder="Provide your email, phone number, or preferred way to be contacted..."
                 required
               />
-              <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+              <p className={`text-xs mt-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                 This information will be shared with the candidate
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+          <div className="flex flex-col sm:flex-row gap-3 mt-8">
             <button
               type="button"
               onClick={onClose}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition text-sm ${
+              className={`flex-1 px-5 py-3.5 rounded-xl font-medium transition-all text-sm ${
                 darkMode 
-                  ? "bg-purple-500 text-white hover:bg-purple-600" 
-                  : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+                  ? "bg-gray-700 text-gray-200 hover:bg-gray-600 active:scale-95" 
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95"
               }`}
             >
               Cancel
@@ -192,13 +196,18 @@ const HireModal = memo(function HireModal({ availability, onClose, onConfirm }: 
             <button
               type="submit"
               disabled={isSubmitting || !message.trim() || !contactInfo.trim()}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium text-white transition text-sm ${
-                isSubmitting || !message.trim() || !contactInfo.trim()
-                  ? "bg-blue-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
+              className={`flex-1 px-5 py-3.5 rounded-xl font-medium text-white transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                darkMode
+                  ? "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 active:scale-95 shadow-lg shadow-blue-500/20"
+                  : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:scale-95 shadow-lg shadow-blue-500/30"
               }`}
             >
-              {isSubmitting ? "Sending..." : "Send Hire Request"}
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Sending...
+                </span>
+              ) : "Send Hire Request"}
             </button>
           </div>
         </form>
@@ -223,15 +232,15 @@ const OptimizedImage = memo(function OptimizedImage({
   const [imageError, setImageError] = useState(false);
 
   return (
-    <div className={`relative ${className}`} onClick={onClick}>
+    <div className={`relative overflow-hidden ${className}`} onClick={onClick}>
       {!imageLoaded && !imageError && (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-600 animate-pulse flex items-center justify-center">
-          <div className="text-gray-400 text-xs">Loading...</div>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 animate-pulse flex items-center justify-center">
+          <div className="text-gray-400 dark:text-gray-500 text-xs">Loading...</div>
         </div>
       )}
       {imageError ? (
-        <div className="absolute inset-0 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-          <div className="text-center text-gray-400">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
+          <div className="text-center text-gray-400 dark:text-gray-500">
             <div className="text-lg mb-1">📷</div>
             <p className="text-xs">Image not available</p>
           </div>
@@ -240,8 +249,8 @@ const OptimizedImage = memo(function OptimizedImage({
         <img
           src={src}
           alt={alt}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
+          className={`w-full h-full object-cover transition-all duration-500 ${
+            imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
           } ${className}`}
           onLoad={() => setImageLoaded(true)}
           onError={() => {
@@ -317,7 +326,7 @@ export default function DashboardPage() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Text color utilities
-  const textMuted = darkMode ? "text-gray-300" : "text-gray-600";
+  const textMuted = darkMode ? "text-gray-400" : "text-gray-500";
   const textPrimary = darkMode ? "text-white" : "text-gray-900";
   const textSecondary = darkMode ? "text-gray-200" : "text-gray-700";
 
@@ -1252,7 +1261,7 @@ export default function DashboardPage() {
     }
   }, [activeTab, isEmployer]);
 
-  // Function to render ad placements
+  // Function to render ad placements - FIXED BASED ON ORIGINAL CODE
   const renderAdPlacement = useCallback((ad: AdPlacement) => (
     <div
       key={ad.id}
@@ -1290,16 +1299,16 @@ export default function DashboardPage() {
       </div>
       
       <div className="p-4 flex-1 flex flex-col">
-        <h3 className={`font-semibold text-sm line-clamp-1 mb-2 ${textPrimary}`}>
+        <h3 className={`font-semibold text-sm line-clamp-1 mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
           {ad.title}
         </h3>
         
-        <p className={`text-xs line-clamp-2 mb-4 leading-relaxed ${textMuted}`}>
+        <p className={`text-xs line-clamp-2 mb-4 leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
           {ad.description}
         </p>
         
         <div className="mt-auto flex justify-between items-center">
-          <span className={`text-xs ${textMuted} font-medium`}>
+          <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"} font-medium`}>
             Sponsored
           </span>
           <button
@@ -1314,16 +1323,24 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  ), [openAdModal, textPrimary, textMuted]);
+  ), [openAdModal, darkMode]);
 
   // Memoized function to render posts with ads
   const renderPostsWithAds = useMemo(() => {
     if (loadingPosts) {
       return (
-        <div className="col-span-3 text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-          <p className={`text-sm ${textMuted}`}>
+        <div className="col-span-3 text-center py-12">
+          <div className="inline-flex items-center justify-center">
+            <div className="relative">
+              <div className="w-12 h-12 border-3 border-gray-300 dark:border-gray-600 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-12 h-12 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          </div>
+          <p className={`text-sm mt-4 font-medium ${darkMode ? "text-white" : "text-gray-900"}`}>
             Loading {activeTab === "jobs" ? "jobs" : activeTab === "talent" ? "talent" : "services"}...
+          </p>
+          <p className={`text-xs mt-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+            Preparing the best opportunities for you
           </p>
         </div>
       );
@@ -1331,14 +1348,16 @@ export default function DashboardPage() {
 
     if (currentPosts.length === 0) {
       return (
-        <div className="col-span-3 text-center py-8">
-          <div className="text-gray-400 text-4xl mb-3">
-            {activeTab === "jobs" ? "💼" : activeTab === "talent" ? "👥" : "🛠️"}
+        <div className="col-span-3 text-center py-12">
+          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${darkMode ? "bg-gray-700" : "bg-gray-100"} mb-4`}>
+            <div className="text-2xl">
+              {activeTab === "jobs" ? "💼" : activeTab === "talent" ? "👥" : "🛠️"}
+            </div>
           </div>
-          <h3 className="text-sm font-medium mb-2">
+          <h3 className={`text-base font-semibold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
             {getNoPostsMessage()}
           </h3>
-          <p className="text-xs text-gray-600 max-w-md mx-auto">
+          <p className={`text-sm max-w-md mx-auto mb-6 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
             {activeTab === "services" 
               ? "We're working on bringing you professional services to enhance your experience."
               : (fromCountry || toCountry) ? "Try adjusting your search criteria" : "No posts available yet"
@@ -1347,9 +1366,13 @@ export default function DashboardPage() {
           {(fromCountry || toCountry) && activeTab !== "services" && (
             <button
               onClick={() => fetchPosts()}
-              className="mt-3 px-3 py-1.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
+              className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                darkMode
+                  ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/20"
+                  : "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-md shadow-blue-500/30"
+              }`}
             >
-              Show All
+              Show All Opportunities
             </button>
           )}
         </div>
@@ -1405,7 +1428,7 @@ export default function DashboardPage() {
     adPlacements,
     fromCountry,
     toCountry,
-    textMuted,
+    darkMode,
     getNoPostsMessage,
     fetchPosts,
     openAvailabilityModal,
@@ -1420,11 +1443,14 @@ export default function DashboardPage() {
   // Show initial loading screen
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-900">
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? "bg-gray-900" : "bg-gray-50"} text-gray-900 dark:text-white`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-3"></div>
+          <div className="relative inline-flex mb-4">
+            <div className="w-14 h-14 border-3 border-gray-300 dark:border-gray-600 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-14 h-14 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
           <h2 className="text-base font-semibold mb-2">Loading Dashboard...</h2>
-          <p className="text-sm text-gray-600">Getting everything ready for you</p>
+          <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Getting everything ready for you</p>
         </div>
       </div>
     );
@@ -1434,38 +1460,38 @@ export default function DashboardPage() {
     <div
       className={`min-h-screen p-4 sm:p-6 transition-colors duration-300 ${
         darkMode
-          ? "bg-gradient-to-br from-blue-700 via-purple-600 to-purple-800 text-white"
+          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white"
           : "bg-gray-50 text-gray-900"
       }`}
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4 gap-4 sm:gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-6 gap-4 sm:gap-6">
         <div className="flex flex-col flex-1">
           <h1 className="flex items-center gap-2 text-xl font-semibold">
             <span className="text-xl">💪🏿</span>
             <span className="leading-none">NguvuHire</span>
           </h1>
           {/* Role indicator */}
-          <p className={`text-xs mt-1 ${textMuted}`}>
+          <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
             {isEmployer ? "👔 Employer Dashboard" : "💼 Job Seeker Dashboard"}
           </p>
           
           {/* Location indicator */}
           {profile?.country && (
-            <p className={`text-xs mt-1 ${textMuted}`}>
-              📍 Your location: {profile.country}
+            <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+              📍 Your location: <span className="font-medium">{profile.country}</span>
             </p>
           )}
         </div>
 
         {/* Profile + Action buttons */}
-        <div className="flex flex-col items-end gap-3">
-          <div className="flex items-center gap-2">
-            <div className={`text-xs ${textPrimary} hidden sm:block`}>
-              Welcome, <span className="font-medium">{getDisplayName()}</span>
+        <div className="flex flex-col items-end gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`text-sm hidden sm:block ${darkMode ? "text-white" : "text-gray-900"}`}>
+              Welcome, <span className="font-semibold">{getDisplayName()}</span>
               {profile?.is_verified && (
-                <span className="ml-1 text-blue-400" title="Verified User">
-                  <CheckCircle className="w-3 h-3 inline" />
+                <span className="ml-1.5 text-blue-500" title="Verified User">
+                  <CheckCircle className="w-3.5 h-3.5 inline" />
                 </span>
               )}
             </div>
@@ -1476,12 +1502,12 @@ export default function DashboardPage() {
               <OptimizedImage
                 src={profileImageSrc(profile) ?? ""}
                 alt="Profile"
-                className="w-8 h-8 rounded-full object-cover cursor-pointer border-2 border-purple-500"
+                className="w-9 h-9 rounded-full object-cover cursor-pointer border-2 border-blue-500"
                 onClick={() => router.push("/profile")}
               />
             ) : (
               <div
-                className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white cursor-pointer"
+                className={`w-9 h-9 rounded-full ${darkMode ? "bg-gray-700" : "bg-gray-400"} flex items-center justify-center text-white cursor-pointer`}
                 onClick={() => router.push("/profile")}
               >
                 <User className="w-4 h-4" />
@@ -1490,8 +1516,10 @@ export default function DashboardPage() {
 
             <button
               onClick={toggleDarkMode}
-              className={`p-1.5 rounded-lg transition ${
-                darkMode ? "bg-yellow-400" : "bg-gray-200"
+              className={`p-2 rounded-xl transition-all hover:scale-105 active:scale-95 ${
+                darkMode 
+                  ? "bg-gray-700 text-yellow-300 hover:bg-gray-600" 
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
               aria-label="Toggle theme"
             >
@@ -1500,26 +1528,26 @@ export default function DashboardPage() {
           </div>
 
           {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
             {isEmployer ? (
               <>
                 <button
                   onClick={handleViewApplications}
-                  className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
                     darkMode
-                      ? "bg-green-500 text-white hover:bg-green-600"
+                      ? "bg-green-600 text-white hover:bg-green-700"
                       : "bg-green-500 text-white hover:bg-green-600"
                   }`}
                 >
-                  <Briefcase className="w-3 h-3" />
+                  <Briefcase className="w-3.5 h-3.5" />
                   <span className="sm:block hidden">Applications</span>
                   <span className="sm:hidden">Apps</span>
                 </button>
                 <button
                   onClick={handlePost}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
                     darkMode
-                      ? "bg-purple-500 text-white hover:bg-purple-600"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
                       : "bg-blue-500 text-white hover:bg-blue-600"
                   }`}
                 >
@@ -1529,26 +1557,26 @@ export default function DashboardPage() {
                 {!profile?.is_verified && (
                   <button
                     onClick={handleGetVerified}
-                    className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                    className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
                       darkMode
-                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
                         : "bg-blue-500 text-white hover:bg-blue-600"
                     }`}
                   >
-                    <CheckCircle className="w-3 h-3" />
+                    <CheckCircle className="w-3.5 h-3.5" />
                     <span>Get Verified</span>
                   </button>
                 )}
                 {/* ADDED BOOST BUTTON FOR EMPLOYERS */}
                 <button
                   onClick={handleViewPricing}
-                  className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
                     darkMode
                       ? "bg-yellow-500 text-black hover:bg-yellow-600"
                       : "bg-yellow-400 text-black hover:bg-yellow-500"
                   }`}
                 >
-                  <Crown className="w-3 h-3" />
+                  <Crown className="w-3.5 h-3.5" />
                   <span>Boost</span>
                 </button>
               </>
@@ -1556,9 +1584,9 @@ export default function DashboardPage() {
               <>
                 <button
                   onClick={handleViewHireRequests}
-                  className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
                     darkMode
-                      ? "bg-orange-500 text-white hover:bg-orange-600"
+                      ? "bg-orange-600 text-white hover:bg-orange-700"
                       : "bg-orange-500 text-white hover:bg-orange-600"
                   }`}
                 >
@@ -1567,9 +1595,9 @@ export default function DashboardPage() {
                 </button>
                 <button
                   onClick={handlePost}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
                     darkMode
-                      ? "bg-purple-500 text-white hover:bg-purple-600"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
                       : "bg-blue-500 text-white hover:bg-blue-600"
                   }`}
                 >
@@ -1579,26 +1607,26 @@ export default function DashboardPage() {
                 {!profile?.is_verified && (
                   <button
                     onClick={handleGetVerified}
-                    className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                    className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
                       darkMode
-                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
                         : "bg-blue-500 text-white hover:bg-blue-600"
                     }`}
                   >
-                    <CheckCircle className="w-3 h-3" />
+                    <CheckCircle className="w-3.5 h-3.5" />
                     <span>Get Verified</span>
                   </button>
                 )}
                 {/* ADDED BOOST BUTTON FOR JOB SEEKERS */}
                 <button
                   onClick={handleViewPricing}
-                  className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition w-full sm:w-auto ${
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
                     darkMode
                       ? "bg-yellow-500 text-black hover:bg-yellow-600"
                       : "bg-yellow-400 text-black hover:bg-yellow-500"
                   }`}
                 >
-                  <Crown className="w-3 h-3" />
+                  <Crown className="w-3.5 h-3.5" />
                   <span>Boost</span>
                 </button>
               </>
@@ -1609,17 +1637,22 @@ export default function DashboardPage() {
 
       {/* ADDED: Verification Status Banner - ONLY SHOW IF NOT VERIFIED */}
       {!profile?.is_verified && (
-        <div className={`rounded-lg p-3 mb-4 ${darkMode ? "bg-blue-500/20 border border-blue-400" : "bg-blue-50 border border-blue-200"}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle className={`w-4 h-4 ${darkMode ? "text-blue-300" : "text-blue-500"}`} />
-              <span className={`text-xs font-medium ${darkMode ? "text-blue-200" : "text-blue-800"}`}>
-                Get verified to appear first in search results
-              </span>
+        <div className={`rounded-xl p-4 mb-5 ${darkMode ? "bg-blue-900/30 border border-blue-700" : "bg-blue-50 border border-blue-200"}`}>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <CheckCircle className={`w-5 h-5 ${darkMode ? "text-blue-300" : "text-blue-500"}`} />
+              <div>
+                <span className={`text-sm font-semibold ${darkMode ? "text-blue-200" : "text-blue-800"}`}>
+                  Get verified to appear first in search results
+                </span>
+                <p className={`text-xs mt-0.5 ${darkMode ? "text-blue-300" : "text-blue-600"}`}>
+                  Increase your visibility and credibility
+                </p>
+              </div>
             </div>
             <button
               onClick={handleGetVerified}
-              className={`px-3 py-1 rounded text-xs font-medium transition ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:scale-105 active:scale-95 ${
                 darkMode 
                   ? "bg-blue-500 text-white hover:bg-blue-600" 
                   : "bg-blue-500 text-white hover:bg-blue-600"
@@ -1632,57 +1665,84 @@ export default function DashboardPage() {
       )}
 
       {/* ADDED: Unified Navigation Tabs */}
-      <div className={`flex gap-1 p-1 rounded-lg mb-4 ${
-        darkMode ? "bg-purple-500/20" : "bg-gray-200"
+      <div className={`flex gap-1 p-1 rounded-xl mb-6 ${
+        darkMode ? "bg-gray-800" : "bg-gray-200"
       }`}>
         <button
           onClick={() => setActiveTab("jobs")}
-          className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition ${
+          className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
             activeTab === "jobs"
               ? darkMode
                 ? "bg-purple-500 text-white shadow"
                 : "bg-white text-gray-900 shadow"
               : darkMode
-                ? "text-purple-200 hover:text-white"
-                : "text-gray-600 hover:text-gray-900"
+                ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-300"
           }`}
         >
-          💼 Jobs {activeTab === "jobs" && !isEmployer && `(${jobs.length})`}
+          <div className="flex items-center justify-center gap-2">
+            <span>💼</span>
+            <span>Jobs</span>
+            {activeTab === "jobs" && !isEmployer && (
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                darkMode 
+                  ? "bg-purple-600/50 text-white" 
+                  : "bg-blue-100 text-blue-800 font-medium"
+              }`}>
+                {jobs.length}
+              </span>
+            )}
+          </div>
         </button>
         <button
           onClick={() => setActiveTab("talent")}
-          className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition ${
+          className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
             activeTab === "talent"
               ? darkMode
                 ? "bg-purple-500 text-white shadow"
                 : "bg-white text-gray-900 shadow"
               : darkMode
-                ? "text-purple-200 hover:text-white"
-                : "text-gray-600 hover:text-gray-900"
+                ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-300"
           }`}
         >
-          👥 Talent {activeTab === "talent" && isEmployer && `(${availabilities.length})`}
+          <div className="flex items-center justify-center gap-2">
+            <span>👥</span>
+            <span>Talent</span>
+            {activeTab === "talent" && isEmployer && (
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                darkMode 
+                  ? "bg-purple-600/50 text-white" 
+                  : "bg-blue-100 text-blue-800 font-medium"
+              }`}>
+                {availabilities.length}
+              </span>
+            )}
+          </div>
         </button>
         <button
           onClick={() => setActiveTab("services")}
-          className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition ${
+          className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
             activeTab === "services"
               ? darkMode
                 ? "bg-purple-500 text-white shadow"
                 : "bg-white text-gray-900 shadow"
               : darkMode
-                ? "text-purple-200 hover:text-white"
-                : "text-gray-600 hover:text-gray-900"
+                ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-300"
           }`}
         >
-          🛠️ Services
+          <div className="flex items-center justify-center gap-2">
+            <span>🛠️</span>
+            <span>Services</span>
+          </div>
         </button>
       </div>
 
       {/* SEARCH BARS ROW - MOBILE OPTIMIZED - Only show for jobs and talent tabs */}
       {(activeTab === "jobs" || activeTab === "talent") && (
-        <div className="space-y-3 mb-4">
-          {/* QUICK ACTION BUTTONS - UPDATED WITH REMOTE BUTTON */}
+        <div className="space-y-4 mb-6">
+          {/* QUICK ACTION BUTTONS - FIXED SIZE (SMALLER) */}
           <div className="flex gap-2">
             <button
               onClick={handleShowRemote}
@@ -1717,43 +1777,46 @@ export default function DashboardPage() {
           </div>
 
           {/* MAIN SEARCH BAR - Full width on mobile */}
-          <div className={`rounded-lg p-2 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder={
-                  activeTab === "jobs" 
-                    ? "Search jobs..." 
-                    : "Search skills, roles, names..."
-                }
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`flex-1 px-3 py-2 rounded-md text-xs focus:outline-none focus:ring-1 ${
-                  darkMode
-                    ? "bg-purple-600/30 text-white placeholder-purple-200 focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
-                    : "bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-blue-400 focus:bg-white border border-gray-200"
-                }`}
-              />
+          <div className={`rounded-xl p-4 ${darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`}>
+            <div className="flex gap-3">
+              <div className="flex-1 relative">
+                <Search className={`absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 ${darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                <input
+                  type="text"
+                  placeholder={
+                    activeTab === "jobs" 
+                      ? "Search jobs..." 
+                      : "Search skills, roles, names..."
+                  }
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full pl-10 pr-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    darkMode
+                      ? "bg-gray-700 text-white placeholder-gray-400 focus:bg-gray-600 border border-gray-600"
+                      : "bg-gray-100 text-gray-900 placeholder-gray-500 focus:bg-white border border-gray-300"
+                  }`}
+                />
+              </div>
             </div>
           </div>
           
           {/* REGION SEARCH - WITH EXTERNAL LABELS */}
-          <div className={`rounded-lg p-3 ${darkMode ? "bg-purple-500/20 backdrop-blur-sm border border-purple-400/30" : "bg-white border border-gray-200"}`}>
-            <div className="flex flex-col sm:flex-row gap-3">
+          <div className={`rounded-xl p-4 ${darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`}>
+            <div className="flex flex-col sm:flex-row gap-4">
               {/* Country selects with external labels */}
               <div className="flex flex-col xs:flex-row gap-3 flex-1">
                 {/* First dropdown with external label */}
                 <div className="flex-1">
-                  <label className={`block text-xs font-semibold mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  <label className={`block text-xs font-semibold mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                     {isEmployer ? "📍 Hire from" : "📍 I am from"}
                   </label>
                   <select
                     value={fromCountry}
                     onChange={(e) => setFromCountry(e.target.value)}
-                    className={`w-full px-2 py-1.5 rounded-md text-xs focus:outline-none focus:ring-1 ${
+                    className={`w-full px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       darkMode
-                        ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
-                        : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
+                        ? "bg-gray-700 text-white focus:bg-gray-600 border border-gray-600"
+                        : "bg-gray-100 text-gray-900 focus:bg-white border border-gray-300"
                     }`}
                   >
                     <option value="">Select country</option>
@@ -1767,16 +1830,16 @@ export default function DashboardPage() {
                 
                 {/* Second dropdown with external label */}
                 <div className="flex-1">
-                  <label className={`block text-xs font-semibold mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  <label className={`block text-xs font-semibold mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                     {isEmployer ? "🏢 Job location" : "💼 Work in"}
                   </label>
                   <select
                     value={toCountry}
                     onChange={(e) => setToCountry(e.target.value)}
-                    className={`w-full px-2 py-1.5 rounded-md text-xs focus:outline-none focus:ring-1 ${
+                    className={`w-full px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       darkMode
-                        ? "bg-purple-600/30 text-white focus:ring-purple-300 focus:bg-purple-600/50 border border-purple-400/30"
-                        : "bg-gray-100 text-gray-900 focus:ring-blue-400 focus:bg-white border border-gray-200"
+                        ? "bg-gray-700 text-white focus:bg-gray-600 border border-gray-600"
+                        : "bg-gray-100 text-gray-900 focus:bg-white border border-gray-300"
                     }`}
                   >
                     <option value="">Select country</option>
@@ -1793,19 +1856,20 @@ export default function DashboardPage() {
               <div className="flex items-end">
                 <button
                   onClick={handleRegionSearch}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition sm:w-auto w-full ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:scale-105 active:scale-95 sm:w-auto w-full ${
                     darkMode 
                       ? "bg-purple-500 text-white hover:bg-purple-600 border border-purple-400"
                       : "bg-blue-500 text-white hover:bg-blue-600 border border-blue-400"
                   }`}
                 >
-                  Find
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Find</span>
                 </button>
               </div>
             </div>
             
             {/* Help text */}
-            <p className={`text-xs mt-2 ${textMuted}`}>
+            <p className={`text-xs mt-3 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
               {isEmployer 
                 ? "Find candidates from specific countries for jobs in specific locations"
                 : "Find jobs that want to hire people from your country or jobs in specific locations"
@@ -1817,28 +1881,28 @@ export default function DashboardPage() {
 
       {/* Services Tab Content */}
       {activeTab === "services" && (
-        <div className={`rounded-lg p-4 mb-4 ${darkMode ? "bg-purple-500/20 border border-purple-400/30" : "bg-white border border-gray-200"}`}>
-          <div className="text-center py-6">
+        <div className={`rounded-xl p-6 mb-6 ${darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`}>
+          <div className="text-center py-8">
             <div className="text-4xl mb-3">🛠️</div>
-            <h3 className="text-base font-bold mb-2">Services Coming Soon</h3>
-            <p className="text-xs text-gray-600 max-w-md mx-auto mb-4">
+            <h3 className={`text-lg font-bold mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>Services Coming Soon</h3>
+            <p className={`text-sm max-w-md mx-auto mb-8 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
               We're working on bringing you professional services to enhance your hiring and job search experience.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
-              <div className={`p-3 rounded-lg ${darkMode ? "bg-purple-500/20" : "bg-blue-50"}`}>
-                <div className="text-lg mb-1">📊</div>
-                <h4 className="font-semibold text-xs mb-1">Analytics</h4>
-                <p className="text-xs">Detailed insights and reporting</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+              <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-blue-50"}`}>
+                <div className="text-xl mb-2">📊</div>
+                <h4 className={`font-semibold text-sm mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>Analytics</h4>
+                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Detailed insights and reporting</p>
               </div>
-              <div className={`p-3 rounded-lg ${darkMode ? "bg-purple-500/20" : "bg-blue-50"}`}>
-                <div className="text-lg mb-1">🎯</div>
-                <h4 className="font-semibold text-xs mb-1">Matching</h4>
-                <p className="text-xs">Advanced candidate matching</p>
+              <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-blue-50"}`}>
+                <div className="text-xl mb-2">🎯</div>
+                <h4 className={`font-semibold text-sm mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>Matching</h4>
+                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Advanced candidate matching</p>
               </div>
-              <div className={`p-3 rounded-lg ${darkMode ? "bg-purple-500/20" : "bg-blue-50"}`}>
-                <div className="text-lg mb-1">⚡</div>
-                <h4 className="font-semibold text-xs mb-1">Tools</h4>
-                <p className="text-xs">Productivity enhancements</p>
+              <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-blue-50"}`}>
+                <div className="text-xl mb-2">⚡</div>
+                <h4 className={`font-semibold text-sm mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>Tools</h4>
+                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Productivity enhancements</p>
               </div>
             </div>
           </div>
@@ -1846,20 +1910,20 @@ export default function DashboardPage() {
       )}
 
       {/* Posts Grid - Clean and simple, only shows posts */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         {renderPostsWithAds}
       </div>
 
       {/* Pagination Component */}
       {totalPages > 1 && activeTab !== "services" && (
-        <div className="mt-6">
+        <div className="mt-8">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
           />
-          <div className="text-center text-xs text-gray-600 dark:text-gray-300 mt-3">
-            Showing {indexOfFirstPost + 1}-{Math.min(indexOfLastPost, displayItems.length)} of {displayItems.length} {activeTab === "jobs" ? "jobs" : "job seekers"}
+          <div className={`text-center text-xs mt-4 font-medium ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+            Showing <span className={darkMode ? "text-blue-400" : "text-blue-600"}>{indexOfFirstPost + 1}-{Math.min(indexOfLastPost, displayItems.length)}</span> of <span className={darkMode ? "text-blue-400" : "text-blue-600"}>{displayItems.length}</span> {activeTab === "jobs" ? "jobs" : "job seekers"}
           </div>
         </div>
       )}
@@ -1867,14 +1931,14 @@ export default function DashboardPage() {
       {/* Logout Button - Mobile Optimized */}
       <button
         onClick={handleLogout}
-        className={`fixed bottom-4 right-4 px-3 py-2 rounded-full text-xs font-medium shadow-xl transition flex items-center gap-1 ${
+        className={`fixed bottom-6 right-6 px-4 py-3 rounded-full text-sm font-medium shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 ${
           darkMode
             ? "bg-purple-500 text-white hover:bg-purple-600"
             : "bg-gray-200 text-gray-900 hover:bg-gray-300"
         }`}
       >
-        <LogOut className="w-3 h-3" />
-        Logout
+        <LogOut className="w-4 h-4" />
+        <span className="hidden sm:inline">Logout</span>
       </button>
 
       {/* Modals */}
