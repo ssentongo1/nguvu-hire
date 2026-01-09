@@ -16,7 +16,8 @@ import {
   MessageSquare,
   CreditCard,
   Bell,
-  AlertCircle
+  AlertCircle,
+  Lock
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -43,7 +44,7 @@ export default function AdminDashboard() {
       setAuthLoading(false);
       fetchAdminStats();
     } else {
-      router.push("/admin/ads/lock");
+      router.push("/admin/lock");
     }
   }, [router]);
 
@@ -152,7 +153,7 @@ export default function AdminDashboard() {
 
   const lockAdmin = () => {
     sessionStorage.removeItem("admin_authenticated");
-    router.push("/admin/ads/lock");
+    router.push("/admin/lock");
   };
 
   const navigateTo = (path: string) => {
@@ -265,7 +266,7 @@ export default function AdminDashboard() {
               onClick={lockAdmin}
               className="flex items-center gap-2 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition text-base backdrop-blur-lg"
             >
-              🔒 Lock
+              <Lock className="w-4 h-4" /> Lock
             </button>
           </div>
         </div>
