@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase, testSupabaseConnection } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { countries } from "@/utils/countries";
 import { Mail, Lock, Globe, User, Building, ChevronRight, X, Sparkles, CheckCircle, ArrowRight, Search, ChevronDown } from "lucide-react";
 
@@ -20,7 +20,6 @@ function HomeContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [connectionTested, setConnectionTested] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
 
@@ -40,27 +39,19 @@ function HomeContent() {
     }
   }, [searchParams]);
 
-  // Test Supabase connection on mount
-  useEffect(() => {
-    const testConnection = async () => {
-      const result = await testSupabaseConnection();
-      setConnectionTested(true);
-      if (!result.success) {
-        console.warn("Connection issues detected, but continuing...");
-      }
-    };
-    
-    testConnection();
-  }, []);
-
   // Redirect logged-in users to dashboard
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        router.push("/dashboard");
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          router.push("/dashboard");
+        }
+      } catch (err) {
+        console.error("Session check error:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     
     checkSession();
@@ -130,14 +121,6 @@ function HomeContent() {
     setResetMessage("");
 
     try {
-      if (!connectionTested) {
-        const testResult = await testSupabaseConnection();
-        if (!testResult.success) {
-          setError("Cannot connect to server. Please check your internet and try again.");
-          return;
-        }
-      }
-
       if (isLogin) {
         // Login
         console.log("🔑 Attempting login...");
@@ -696,8 +679,7 @@ function HomeContent() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={!connectionTested}
-                    className="group relative w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-4 rounded-xl font-semibold text-sm transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden shadow-md hover:shadow-lg"
+                    className="group relative w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-4 rounded-xl font-semibold text-sm transition-all duration-300 transform hover:scale-[1.02] overflow-hidden shadow-md hover:shadow-lg"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                     <span className="relative">
@@ -749,16 +731,6 @@ function HomeContent() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Connection Status Indicator */}
-      {!connectionTested && (
-        <div className="fixed bottom-4 right-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs px-4 py-2 rounded-full shadow-lg animate-pulse">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-            <span>Connecting...</span>
           </div>
         </div>
       )}
