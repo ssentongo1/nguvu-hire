@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,10 +12,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabaseServer = createSupabaseServerClient();
-
     // Check if profile already exists
-    const { data: existingProfile, error: fetchError } = await supabaseServer
+    const { data: existingProfile, error: fetchError } = await supabase
       .from("profiles")
       .select("id")
       .eq("id", userId)
@@ -29,6 +27,7 @@ export async function POST(req: NextRequest) {
     const profileData: any = {
       role,
       country,
+      updated_at: new Date().toISOString()
     };
 
     if (role === "employer") {
@@ -39,10 +38,19 @@ export async function POST(req: NextRequest) {
 
     if (existingProfile) {
       // Update existing profile
-      ({ error } = await supabaseServer.from("profiles").update(profileData).eq("id", userId));
+      ({ error } = await supabase
+        .from("profiles")
+        .update(profileData)
+        .eq("id", userId));
     } else {
       // Create new profile
-      ({ error } = await supabaseServer.from("profiles").insert({ id: userId, ...profileData }));
+      ({ error } = await supabase
+        .from("profiles")
+        .insert({ 
+          id: userId, 
+          ...profileData,
+          created_at: new Date().toISOString()
+        }));
     }
 
     if (error) {
