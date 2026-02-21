@@ -1,10 +1,8 @@
-import { supabaseServer } from '@/utils/supabase/server'
+import { supabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const supabase = supabaseServer
-    
     console.log('Fetching subscription status...')
     
     // Get user session

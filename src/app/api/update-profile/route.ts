@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       profile_picture: "",
     };
 
-    const { error } = await supabaseServer.from("profiles").insert(profileData);
+    const { error } = await supabase.from("profiles").insert(profileData);
 
     if (error) {
       console.error("Profile Insert Error:", error.message);

@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/utils/supabase/server'
+import { supabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
 interface BoostRequest {
@@ -9,7 +9,6 @@ interface BoostRequest {
 
 export async function POST(request: Request) {
   try {
-    const supabase = supabaseServer
     const { postId, postType, boostType = 'standard' }: BoostRequest = await request.json()
 
     console.log('Boosting post:', { postId, postType, boostType })
