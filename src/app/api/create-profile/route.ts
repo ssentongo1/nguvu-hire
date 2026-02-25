@@ -1,66 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@supabase/supabase-js';
+
+// Create a Supabase admin client with the service role key (bypasses RLS)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
 
 export async function POST(req: NextRequest) {
   try {
     const { userId, role, employerType, country } = await req.json();
 
+    console.log("📝 Creating profile for user:", userId);
+
     if (!userId || !role || !country) {
       return NextResponse.json(
-        { error: "Missing required fields: userId, role, or country" },
+        { error: "Missing required fields", details: { userId, role, country } },
         { status: 400 }
       );
     }
 
-    // Check if profile already exists
-    const { data: existingProfile, error: fetchError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.error("❌ Fetch profile error:", fetchError);
-      return NextResponse.json({ error: "Database error checking profile" }, { status: 500 });
-    }
-
-    const profileData: any = {
+    // Prepare profile data
+    const profileData = {
+      id: userId,
       role,
       country,
-      updated_at: new Date().toISOString()
+      employer_type: role === "employer" ? employerType : null,
+      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
     };
 
-    if (role === "employer") {
-      profileData.employer_type = employerType || null;
-    }
+    console.log("📦 Profile data:", profileData);
 
-    let error;
-
-    if (existingProfile) {
-      // Update existing profile
-      ({ error } = await supabase
-        .from("profiles")
-        .update(profileData)
-        .eq("id", userId));
-    } else {
-      // Create new profile
-      ({ error } = await supabase
-        .from("profiles")
-        .insert({ 
-          id: userId, 
-          ...profileData,
-          created_at: new Date().toISOString()
-        }));
-    }
+    // Insert directly - service role bypasses RLS
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .upsert(profileData, { onConflict: 'id' });
 
     if (error) {
       console.error("❌ Profile save error:", error);
-      return NextResponse.json({ error: "Database error saving profile" }, { status: 500 });
+      return NextResponse.json({ 
+        error: "Database error saving profile",
+        details: error.message,
+        code: error.code
+      }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    console.log("✅ Profile created/updated successfully");
+    return NextResponse.json({ success: true, data });
   } catch (err: any) {
-    console.error("🔥 API Error:", err.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("🔥 API Error:", err);
+    return NextResponse.json({ 
+      error: "Internal server error",
+      details: err.message 
+    }, { status: 500 });
   }
 }

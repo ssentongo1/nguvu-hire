@@ -394,9 +394,14 @@ export default function DashboardPage() {
 
   // Optimized fetchPosts function with parallel data fetching
   const fetchPosts = useCallback(async () => {
+    if (!profile?.role) {
+      console.log("No profile role, skipping fetchPosts");
+      return;
+    }
+
     setLoadingPosts(true);
     try {
-      const role = profile?.role;
+      const role = profile.role;
       
       if (role === "employer") {
         // Fetch availabilities and profiles in parallel
@@ -604,40 +609,58 @@ export default function DashboardPage() {
     }
   }, [profile?.role]);
 
-  // Fetch profile and posts on load
+  // Fetch profile and posts on load - FIXED VERSION
   useEffect(() => {
     const loadProfile = async () => {
       try {
         setInitialLoading(true);
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData?.user;
-        if (!user) {
-          setInitialLoading(false);
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error("Error getting user:", userError);
+          router.push("/");
           return;
         }
+
+        const user = userData?.user;
+        
+        if (!user) {
+          console.log("No user found, redirecting to home");
+          router.push("/");
+          return;
+        }
+
+        console.log("Loading profile for user:", user.id);
 
         const { data, error } = await supabase
           .from("profiles")
           .select("id, first_name, last_name, company_name, profile_picture, profile_picture_url, role, employer_type, country, is_verified")
           .eq("id", user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to avoid error when no profile
 
-        if (error) throw error;
-
-        setProfile(data ?? null);
-        
-        if (data) {
+        if (error) {
+          console.error("Error fetching profile:", error);
+          setProfile(null);
+        } else if (!data) {
+          console.log("No profile found for user - profile may need to be created");
+          setProfile(null);
+        } else {
+          console.log("Profile loaded successfully:", data);
+          setProfile(data);
+          
+          // Only fetch posts if profile exists
           await fetchPosts();
         }
       } catch (err) {
-        console.error("Error loading profile:", err);
+        console.error("Error in loadProfile:", err);
+        setProfile(null);
       } finally {
         setInitialLoading(false);
       }
     };
 
     loadProfile();
-  }, [fetchPosts]);
+  }, [router]); // Removed fetchPosts from dependencies to prevent infinite loop
 
   // Fetch real ads from database
   useEffect(() => {
@@ -725,12 +748,12 @@ export default function DashboardPage() {
     router.push("/hire-requests");
   }, [router]);
 
-  // ADD THIS FUNCTION: Handle navigation to pricing page with correct user type
+  // Handle navigation to pricing page with correct user type
   const handleViewPricing = useCallback(() => {
     router.push(`/pricing?type=${userType}`);
   }, [router, userType]);
 
-  // ADD THIS FUNCTION: Handle navigation to verification page - FIXED TO GO TO VERIFICATION TAB
+  // Handle navigation to verification page
   const handleGetVerified = useCallback(() => {
     router.push(`/pricing?type=${userType}&verify=true`);
   }, [router, userType]);
@@ -1261,7 +1284,7 @@ export default function DashboardPage() {
     }
   }, [activeTab, isEmployer]);
 
-  // Function to render ad placements - FIXED BASED ON ORIGINAL CODE
+  // Function to render ad placements
   const renderAdPlacement = useCallback((ad: AdPlacement) => (
     <div
       key={ad.id}
@@ -1553,7 +1576,7 @@ export default function DashboardPage() {
                 >
                   Post Job
                 </button>
-                {/* ADDED VERIFICATION BUTTON - ONLY SHOW IF NOT VERIFIED */}
+                {/* VERIFICATION BUTTON - ONLY SHOW IF NOT VERIFIED */}
                 {!profile?.is_verified && (
                   <button
                     onClick={handleGetVerified}
@@ -1567,7 +1590,7 @@ export default function DashboardPage() {
                     <span>Get Verified</span>
                   </button>
                 )}
-                {/* ADDED BOOST BUTTON FOR EMPLOYERS */}
+                {/* BOOST BUTTON FOR EMPLOYERS */}
                 <button
                   onClick={handleViewPricing}
                   className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
@@ -1603,7 +1626,7 @@ export default function DashboardPage() {
                 >
                   Post Availability
                 </button>
-                {/* ADDED VERIFICATION BUTTON - ONLY SHOW IF NOT VERIFIED */}
+                {/* VERIFICATION BUTTON - ONLY SHOW IF NOT VERIFIED */}
                 {!profile?.is_verified && (
                   <button
                     onClick={handleGetVerified}
@@ -1617,7 +1640,7 @@ export default function DashboardPage() {
                     <span>Get Verified</span>
                   </button>
                 )}
-                {/* ADDED BOOST BUTTON FOR JOB SEEKERS */}
+                {/* BOOST BUTTON FOR JOB SEEKERS */}
                 <button
                   onClick={handleViewPricing}
                   className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto hover:scale-105 active:scale-95 ${
@@ -1635,7 +1658,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ADDED: Verification Status Banner - ONLY SHOW IF NOT VERIFIED */}
+      {/* VERIFICATION STATUS BANNER - ONLY SHOW IF NOT VERIFIED */}
       {!profile?.is_verified && (
         <div className={`rounded-xl p-4 mb-5 ${darkMode ? "bg-blue-900/30 border border-blue-700" : "bg-blue-50 border border-blue-200"}`}>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -1664,7 +1687,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ADDED: Unified Navigation Tabs */}
+      {/* UNIFIED NAVIGATION TABS */}
       <div className={`flex gap-1 p-1 rounded-xl mb-6 ${
         darkMode ? "bg-gray-800" : "bg-gray-200"
       }`}>
@@ -1739,10 +1762,10 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* SEARCH BARS ROW - MOBILE OPTIMIZED - Only show for jobs and talent tabs */}
+      {/* SEARCH BARS ROW - Only show for jobs and talent tabs */}
       {(activeTab === "jobs" || activeTab === "talent") && (
         <div className="space-y-4 mb-6">
-          {/* QUICK ACTION BUTTONS - FIXED SIZE (SMALLER) */}
+          {/* QUICK ACTION BUTTONS */}
           <div className="flex gap-2">
             <button
               onClick={handleShowRemote}
@@ -1776,7 +1799,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* MAIN SEARCH BAR - Full width on mobile */}
+          {/* MAIN SEARCH BAR */}
           <div className={`rounded-xl p-4 ${darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`}>
             <div className="flex gap-3">
               <div className="flex-1 relative">
@@ -1800,12 +1823,12 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          {/* REGION SEARCH - WITH EXTERNAL LABELS */}
+          {/* REGION SEARCH */}
           <div className={`rounded-xl p-4 ${darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`}>
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Country selects with external labels */}
               <div className="flex flex-col xs:flex-row gap-3 flex-1">
-                {/* First dropdown with external label */}
+                {/* First dropdown */}
                 <div className="flex-1">
                   <label className={`block text-xs font-semibold mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                     {isEmployer ? "📍 Hire from" : "📍 I am from"}
@@ -1828,7 +1851,7 @@ export default function DashboardPage() {
                   </select>
                 </div>
                 
-                {/* Second dropdown with external label */}
+                {/* Second dropdown */}
                 <div className="flex-1">
                   <label className={`block text-xs font-semibold mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                     {isEmployer ? "🏢 Job location" : "💼 Work in"}
@@ -1909,7 +1932,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Posts Grid - Clean and simple, only shows posts */}
+      {/* Posts Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         {renderPostsWithAds}
       </div>
@@ -1928,7 +1951,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Logout Button - Mobile Optimized */}
+      {/* Logout Button */}
       <button
         onClick={handleLogout}
         className={`fixed bottom-6 right-6 px-4 py-3 rounded-full text-sm font-medium shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 ${

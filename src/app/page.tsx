@@ -133,15 +133,10 @@ function HomeContent() {
         if (signInError) {
           console.error("Login error:", signInError);
           
-          // User-friendly error messages
           if (signInError.message.includes("Invalid login credentials")) {
             setError("Invalid email or password. Please try again.");
           } else if (signInError.message.includes("Email not confirmed")) {
             setError("Please check your email for verification link.");
-          } else if (signInError.message.includes("Invalid API key")) {
-            setError("Server configuration issue. Please contact support.");
-          } else if (signInError.message.includes("400")) {
-            setError("Invalid email or password format.");
           } else {
             setError(signInError.message || "Login failed. Please try again.");
           }
@@ -167,30 +162,38 @@ function HomeContent() {
           return;
         }
 
-        console.log("📝 Attempting signup...");
+        console.log("📝 Attempting signup with email:", email);
+
+        // Simple redirect URL - use origin
+        const redirectUrl = `${window.location.origin}/auth/callback`;
+        console.log("📧 Using redirect URL:", redirectUrl);
 
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: { 
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          options: {
+            emailRedirectTo: redirectUrl,
             data: {
-              role,
-              employer_type: role === "employer" ? employerType : null,
+              role: role,
               country: country,
+              employer_type: role === "employer" ? employerType : null,
             }
           },
         });
 
         if (signUpError) {
-          console.error("Signup error:", signUpError);
+          console.error("❌ Signup error details:", {
+            message: signUpError.message,
+            status: signUpError.status,
+            name: signUpError.name
+          });
           
           if (signUpError.message.includes("User already registered")) {
             setError("Email already registered. Please sign in instead.");
           } else if (signUpError.message.includes("Invalid email")) {
             setError("Please enter a valid email address.");
-          } else if (signUpError.message.includes("Invalid API key")) {
-            setError("Server configuration issue. Please try again later.");
+          } else if (signUpError.message.includes("Email rate limit")) {
+            setError("Too many signup attempts. Please wait a few minutes.");
           } else {
             setError(signUpError.message || "Signup failed. Please try again.");
           }
@@ -198,29 +201,33 @@ function HomeContent() {
         }
 
         if (signUpData.user) {
-          console.log("✅ Signup successful");
+          console.log("✅ Signup successful for user:", signUpData.user.id);
           
-          // Try to create profile (non-critical operation)
+          // Create profile immediately
           try {
+            console.log("📝 Creating profile via API...");
             const response = await fetch("/api/create-profile", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 userId: signUpData.user.id,
-                email: signUpData.user.email,
                 role,
                 employerType: role === "employer" ? employerType : null,
                 country: country,
               }),
             });
 
+            const responseData = await response.json();
+
             if (!response.ok) {
-              const errorData = await response.json();
-              console.warn("Profile creation warning:", errorData.error);
-              // Don't fail signup if profile creation fails
+              console.error("❌ Profile creation failed:", responseData);
+              setError("Account created but profile setup delayed. You can complete it in dashboard.");
+            } else {
+              console.log("✅ Profile created successfully via API");
             }
           } catch (profileError) {
-            console.warn("Profile creation error (non-critical):", profileError);
+            console.error("❌ Profile creation network error:", profileError);
+            setError("Account created but profile setup delayed. You can complete it in dashboard.");
           }
 
           setError("success|Check your email for verification link!");
@@ -229,12 +236,12 @@ function HomeContent() {
           setTimeout(() => {
             setShowAuthModal(false);
             setError("");
-            setIsLogin(true); // Switch back to login
+            setIsLogin(true);
           }, 3000);
         }
       }
     } catch (err: any) {
-      console.error("Auth Error:", err);
+      console.error("🔥 Auth Error:", err);
       setError("An unexpected error occurred. Please try again.");
     }
   };
@@ -250,8 +257,11 @@ function HomeContent() {
     
     try {
       console.log("📧 Sending password reset email...");
+      
+      const redirectUrl = `${window.location.origin}/reset-password`;
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: redirectUrl,
       });
       
       if (error) throw error;
