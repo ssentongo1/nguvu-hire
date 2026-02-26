@@ -392,10 +392,9 @@ export default function DashboardPage() {
     setCurrentPage(1);
   }, [displayItems.length]);
 
-  // Optimized fetchPosts function with parallel data fetching
+  // OPTIMIZED: fetchPosts with proper .eq() instead of .in()
   const fetchPosts = useCallback(async () => {
     if (!profile?.role) {
-      console.log("No profile role, skipping fetchPosts");
       return;
     }
 
@@ -413,7 +412,7 @@ export default function DashboardPage() {
           supabase
             .from("profiles")
             .select("id, username, avatar_url, full_name, is_verified")
-            .in("role", ["job_seeker"])
+            .eq("role", "job_seeker")
         ]);
 
         const { data: availabilitiesData, error: availabilitiesError } = availabilitiesPromise;
@@ -465,7 +464,7 @@ export default function DashboardPage() {
           supabase
             .from("profiles")
             .select("id, username, avatar_url, full_name, company_name, is_verified")
-            .in("role", ["employer"])
+            .eq("role", "employer")
         ]);
 
         const { data: jobsData } = jobsPromise;
@@ -511,7 +510,7 @@ export default function DashboardPage() {
           supabase
             .from("profiles")
             .select("id, username, avatar_url, full_name, company_name, is_verified")
-            .in("role", ["employer"])
+            .eq("role", "employer")
         ]);
 
         const { data: jobsData, error: jobsError } = jobsPromise;
@@ -563,7 +562,7 @@ export default function DashboardPage() {
           supabase
             .from("profiles")
             .select("id, username, avatar_url, full_name, is_verified")
-            .in("role", ["job_seeker"])
+            .eq("role", "job_seeker")
         ]);
 
         const { data: availabilitiesData } = availabilitiesPromise;
@@ -609,58 +608,51 @@ export default function DashboardPage() {
     }
   }, [profile?.role]);
 
-  // Fetch profile and posts on load - FIXED VERSION
+  // Fetch profile and posts on load - OPTIMIZED for speed
   useEffect(() => {
+    let isMounted = true;
+
     const loadProfile = async () => {
       try {
         setInitialLoading(true);
         const { data: userData, error: userError } = await supabase.auth.getUser();
         
-        if (userError) {
-          console.error("Error getting user:", userError);
+        if (userError || !userData?.user) {
           router.push("/");
           return;
         }
 
-        const user = userData?.user;
-        
-        if (!user) {
-          console.log("No user found, redirecting to home");
-          router.push("/");
-          return;
-        }
-
-        console.log("Loading profile for user:", user.id);
+        const user = userData.user;
 
         const { data, error } = await supabase
           .from("profiles")
           .select("id, first_name, last_name, company_name, profile_picture, profile_picture_url, role, employer_type, country, is_verified")
           .eq("id", user.id)
-          .maybeSingle(); // Use maybeSingle instead of single to avoid error when no profile
+          .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching profile:", error);
-          setProfile(null);
-        } else if (!data) {
-          console.log("No profile found for user - profile may need to be created");
+        if (!isMounted) return;
+
+        if (error || !data) {
           setProfile(null);
         } else {
-          console.log("Profile loaded successfully:", data);
           setProfile(data);
           
-          // Only fetch posts if profile exists
-          await fetchPosts();
+          // Immediately fetch posts - no setTimeout
+          if (data.role) {
+            fetchPosts();
+          }
         }
       } catch (err) {
-        console.error("Error in loadProfile:", err);
-        setProfile(null);
+        if (isMounted) setProfile(null);
       } finally {
-        setInitialLoading(false);
+        if (isMounted) setInitialLoading(false);
       }
     };
 
     loadProfile();
-  }, [router]); // Removed fetchPosts from dependencies to prevent infinite loop
+
+    return () => { isMounted = false; };
+  }, [router, fetchPosts]);
 
   // Fetch real ads from database
   useEffect(() => {
